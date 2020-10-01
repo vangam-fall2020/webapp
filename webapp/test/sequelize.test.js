@@ -2,13 +2,9 @@
 process.env.NODE_ENV = "test"
 
 var should = require('should');
-var userAuth = require('../services/authentication');
-
 const base = 'http://localhost:8080';
 const request = require('request');
 const sinon = require('sinon');
-const userjson = require('./user_database.json');
-
 let userService = require('./sequelize_mock');
 const { requests } = require('sinon');
 
