@@ -6,25 +6,31 @@ var DBConnectionMock = new SequelizeMock();
 
 
 // Define our Model
-var UserMock = DBConnectionMock.define('users', {
-    "id": "46cf72e1-56b0-4399-b82b-561dd2efede2",
-    "first_name": " Jane new 8",
-    "last_name": "Doe1 new 8",
-    "password": "Csyenetworks@6225",
-    "email_address": "janenew8.doe@example.com",
-    "account_created": "2020-09-30T15:26:57.000Z",
-    "account_updated": "2020-09-30T15:26:57.000Z"
-});
+var UserMock = DBConnectionMock.define('users', [{
+    "id": "0194ca6a-8882-4c7e-b5d7-cadd01de5987",
+    "first_name": " Jane1",
+    "last_name": "Doe1",
+    "password": "Csyenetworks1@6225",
+    "email_address": "jane1.doe@example.com",
+    "account_created": "2020-10-01T07:06:56.000Z",
+    "account_updated": "2020-10-01T07:09:13.000Z"
+}, {
+    "id": "'b956a3fc-663c-4856-b0f7-f416d00715a9",
+    "first_name": " Jane2",
+    "last_name": "Doe2",
+    "password": "Csyenetworks2@6225",
+    "email_address": "jane2.doe@example.com",
+    "account_created": "2020-10-01T07:06:56.000Z",
+    "account_updated": "2020-10-01T07:09:13.000Z"
+}]);
 
 
 async function GetUsers() {
-
     let promise = new Promise(function (resolve, reject) {
 
         UserMock.findOne({
             where: {
-                username: 'Jane new 8',
-                password: "Csyenetworks@6225"
+                email_address: 'jane1.doe@example.com',
             },
         }).then(function (user) {
             return resolve({
@@ -53,6 +59,114 @@ async function GetUsers() {
                     },
                     "failure": {
                         "res": {
+                            "statusCode": 401,
+                            "headers": {
+                                "content-type": "application/json"
+                            }
+                        },
+                        "body": {
+                            "status": "error",
+                            "message": "Unauthorized"
+                        }
+                    }
+                }
+            });
+        });
+    });
+    let res = await promise;
+    return res;
+}
+
+async function PostRequest() {
+
+    let promise = new Promise(function (resolve, reject) {
+
+        UserMock.findOne({
+            where: {
+                email_address: 'jane1.doe@example.com',
+            },
+        }).then(function (user) {
+            return resolve({
+                "add": {
+                    "success": {
+                        "res": {
+                            "statusCode": 201,
+                            "headers": {
+                                "content-type": "application/json"
+                            }
+                        },
+                        "body": {
+                            "status": "success",
+                            "data": [
+                                {
+                                    "id": "0194ca6a-8882-4c7e-b5d7-cadd01de5987",
+                                    "first_name": " Jane1",
+                                    "last_name": "Doe1",
+                                    "password": "Csyenetworks@6225",
+                                    "email_address": "jane1.doe@example.com",
+                                    "account_created": "2020-10-01T07:06:56.000Z",
+                                    "account_updated": "2020-10-01T07:09:13.000Z"
+                                }
+                            ]
+                        }
+                    },
+                    "failure": {
+                        "res": {
+                            "statusCode": 400,
+                            "headers": {
+                                "content-type": "application/json"
+                            }
+                        },
+                        "body": {
+                            "status": "error",
+                            "message": "Bad Request"
+                        }
+                    }
+                }
+            });
+        });
+    });
+    let res = await promise;
+    return res;
+}
+
+async function PutRequest() {
+    let promise = new Promise(function (resolve, reject) {
+        UserMock.findAll({
+            raw: true
+        }).then(function (users) {
+            return resolve({
+                "all": {
+                    "success": {
+                        "res": {
+                            "statusCode": 200,
+                            "headers": {
+                                "content-type": "application/json"
+                            }
+                        },
+                        "body": {
+                            "status": "success",
+                            "data": [{
+                                "id": "0194ca6a-8882-4c7e-b5d7-cadd01de5987",
+                                "first_name": " Jane1",
+                                "last_name": "Doe1",
+                                "password": "Csyenetworks1@6225",
+                                "email_address": "jane1.doe@example.com",
+                                "account_created": "2020-10-01T07:06:56.000Z",
+                                "account_updated": "2020-10-01T07:09:13.000Z"
+                            }, {
+                                "id": "'b956a3fc-663c-4856-b0f7-f416d00715a9",
+                                "first_name": " Jane2",
+                                "last_name": "Doe2",
+                                "password": "Csyenetworks2@6225",
+                                "email_address": "jane2.doe@example.com",
+                                "account_created": "2020-10-01T07:06:56.000Z",
+                                "account_updated": "2020-10-01T07:09:13.000Z"
+                            }]
+                        }
+                    },
+                    "failure": {
+                        "res": {
                             "statusCode": 400,
                             "headers": {
                                 "content-type": "application/json"
@@ -72,4 +186,6 @@ async function GetUsers() {
 }
 
 module.exports.GetUsers = GetUsers;
+module.exports.PostRequest = PostRequest;
+module.exports.PutRequest = PutRequest;
 module.exports.UserMock = UserMock;
