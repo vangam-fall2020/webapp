@@ -20,37 +20,37 @@ module.exports = app => {
             var password = req.body.password;
             var emailAddress = req.body.email_address;
 
-            if (firstName != null && lastName != null && password != null && emailAddress != null 
+            if (firstName != null && lastName != null && password != null && emailAddress != null
                 && validator.validate(password) == true && emailValidator.validate(emailAddress) == true) {
                 let salt = bcrypt.genSaltSync(saltRounds);
                 let hashedPassword = bcrypt.hashSync(password, salt);
                 const account_created = moment().format();
                 const account_updated = moment().format();
 
-                        // Save User in the database
-                        User.create({
+                // Save User in the database
+                User.create({
+                    first_name: firstName,
+                    last_name: lastName,
+                    password: hashedPassword,
+                    email_address: emailAddress,
+                    account_created: account_created,
+                    account_updated: account_updated
+                })
+                    .then(data => {
+                        res.status(201).send({
+                            id: data.id,
                             first_name: firstName,
                             last_name: lastName,
-                            password: hashedPassword,
                             email_address: emailAddress,
                             account_created: account_created,
                             account_updated: account_updated
-                        })
-                            .then(data => {
-                                res.status(201).send({
-                                    id: data.id,
-                                    first_name: firstName,
-                                    last_name: lastName,
-                                    email_address: emailAddress,
-                                    account_created: account_created,
-                                    account_updated: account_updated
-                                });
-                            })
-                            .catch(err => {
-                                res.status(400).send({
-                                    message: "Bad Request"
-                                });
-                            });
+                        });
+                    })
+                    .catch(err => {
+                        res.status(400).send({
+                            message: "Bad Request"
+                        });
+                    });
 
             }
             else if (firstName == null || lastName == null || password == null || emailAddress == null
@@ -104,7 +104,7 @@ module.exports = app => {
                     } else {
                         User.findOne({ where: { email_address: res.locals.user.email_address } }).then(data => {
                             if (data) {
-                                if(data.email_address == email_address){
+                                if (data.email_address == email_address) {
                                     User.update({
                                         first_name: first_name,
                                         last_name: last_name,
@@ -119,7 +119,7 @@ module.exports = app => {
                                             message: "Bad Request"
                                         });
                                     });
-                                }else{
+                                } else {
                                     return res.status(400).json({ message: 'Bad request' });
                                 }
                             } else {
