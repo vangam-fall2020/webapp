@@ -25,9 +25,9 @@ npm run start
 
 5. API calls in Postman:
 
-    -  GET request: localhost:8080/v1/user/self
-    -  POST request: localhost:8080/v1/user
-    -  PUT request: localhost:8080/v1/user/self
+* GET request: localhost:8080/v1/user/self
+* POST request: localhost:8080/v1/user
+* PUT request: localhost:8080/v1/user/self
 
 ### Running Tests
 
