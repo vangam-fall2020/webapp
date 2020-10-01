@@ -4,10 +4,8 @@
 name: Webapp Test
 
 on:
-  push:
-    branches: [ webapp ]
   pull_request:
-    branches: [ webapp ]
+    branches: [ master ]
 
 jobs:
   build:
