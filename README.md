@@ -37,5 +37,4 @@ Run below command to executes test cases
 npm test webapp/test/user.test.js
 ```
 
-### License
-[MIT](https://choosealicense.com/licenses/mit/)
+### CI/CD
