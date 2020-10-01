@@ -5,7 +5,6 @@ var SequelizeMock = require('sequelize-mock');
 var DBConnectionMock = new SequelizeMock();
 
 
-
 // Define our Model
 var UserMock = DBConnectionMock.define('users', {
     "id": "46cf72e1-56b0-4399-b82b-561dd2efede2",
@@ -20,7 +19,7 @@ var UserMock = DBConnectionMock.define('users', {
 
 async function GetUsers() {
 
-    let promise =  new Promise(function (resolve, reject) {
+    let promise = new Promise(function (resolve, reject) {
 
         UserMock.findOne({
             where: {
@@ -28,45 +27,45 @@ async function GetUsers() {
                 password: "Csyenetworks@6225"
             },
         }).then(function (user) {
-            return  resolve({
+            return resolve({
                 "all": {
-                  "success": {
-                    "res": {
-                      "statusCode": 200,
-                      "headers": {
-                        "content-type": "application/json"
-                      }
-                    },
-                    "body": {
-                      "status": "success",
-                      "data": [
-                        {
-                            "id":  user.get('id'),
-                            "first_name":user.get('first_name'),
-                            "last_name": user.get('last_name'),
-                            "password": user.get('password'),
-                            "email_address": user.get('email_address'),
-                            "account_created": user.get('account_created'),
-                            "account_updated": user.get('account_updated')
+                    "success": {
+                        "res": {
+                            "statusCode": 200,
+                            "headers": {
+                                "content-type": "application/json"
+                            }
+                        },
+                        "body": {
+                            "status": "success",
+                            "data": [
+                                {
+                                    "id": user.get('id'),
+                                    "first_name": user.get('first_name'),
+                                    "last_name": user.get('last_name'),
+                                    "password": user.get('password'),
+                                    "email_address": user.get('email_address'),
+                                    "account_created": user.get('account_created'),
+                                    "account_updated": user.get('account_updated')
+                                }
+                            ]
                         }
-                      ]
-                    }
-                  },
-                  "failure": {
-                    "res": {
-                      "statusCode": 400,
-                      "headers": {
-                        "content-type": "application/json"
-                      }
                     },
-                    "body": {
-                      "status": "error",
-                      "message": "Bad Request"
+                    "failure": {
+                        "res": {
+                            "statusCode": 400,
+                            "headers": {
+                                "content-type": "application/json"
+                            }
+                        },
+                        "body": {
+                            "status": "error",
+                            "message": "Bad Request"
+                        }
                     }
-                  }
                 }
-              });
             });
+        });
     });
     let res = await promise;
     return res;

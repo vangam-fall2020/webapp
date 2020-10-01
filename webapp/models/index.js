@@ -16,13 +16,13 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
 
 sequelize
   .authenticate()
-  .then(function(err) {
+  .then(function (err) {
     console.log('Connection has been established successfully.');
   })
   .catch(function (err) {
     console.log('Unable to connect to the database:', err);
   });
-  
+
 const db = {};
 
 db.Sequelize = Sequelize;
