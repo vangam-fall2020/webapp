@@ -79,6 +79,8 @@ module.exports = app => {
             res.setHeader('Content-Type', 'application/json');
             res.json(res.locals.user);
 
+        }else {
+            res.status(401).json({ msg: 'Unauthorized' });
         }
     });
 

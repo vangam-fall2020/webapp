@@ -45,17 +45,16 @@ module.exports = app => {
 
                                         });
                                     }).catch(err => {
-
                                         res.status(400).send({
                                             message: "Bad Request"
                                         });
                                     })
                                 } else {
-                                    return res.status(404).json({ message: 'Not Found' });
+                                    return res.status(400).json({ message: 'Bad Request' });
                                 }
                             }).catch(err => {
-                                res.status(404).send({
-                                    message: "Not Found"
+                                res.status(400).send({
+                                    message: "Bad Request"
                                 });
                             })
                     }
@@ -104,7 +103,7 @@ module.exports = app => {
                     } else {
                         Answer.findByPk(req.params.aid)
                             .then(answer => {
-                                if (req.params.qid == answer.question_id) {
+                                if (res.locals.user.id == answer.user_id) {
                                     answer.update({
                                         updated_timestamp: moment().format(),
                                         answer_text: answer_text
@@ -116,20 +115,20 @@ module.exports = app => {
                                         });
                                     });
                                 } else {
-                                    res.status(404).send({
-                                        message: "Not Found"
+                                    return res.status(400).send({
+                                        message: "Bad Request"
                                     });
                                 }
                             });
                     }
                 } else {
-                    res.status(400).json({ msg: 'Bad Request' });
+                    return res.status(400).json({ msg: 'Bad Request' });
                 }
             } else {
-                res.status(400).json({ msg: 'Bad Request' });
+                return res.status(400).json({ msg: 'Bad Request' });
             }
         } else {
-            res.status(401).json({ msg: 'Unauthorized' });
+            return res.status(401).json({ msg: 'Unauthorized' });
         }
     });
 
@@ -137,16 +136,16 @@ module.exports = app => {
         if (res.locals.user) {
             Answer.findByPk(req.params.aid)
                 .then(answer => {
-                    if (req.params.qid == answer.question_id) {
+                    if (res.locals.user.id == answer.user_id) {
                         answer.destroy({ where: { answer_id: req.params.aid } })
                             .then(data => {
                                 res.status(204).send();
                             }).catch(err => {
-                                console.log("err: ", err);
+                                
                             });
                     } else {
-                        res.status(404).send({
-                            message: "Not Found"
+                        return res.status(400).send({
+                            message: "Bad Request"
                         });
                     }
                 }).catch(err => {
@@ -155,7 +154,7 @@ module.exports = app => {
                     });
                 });
         } else {
-            res.status(401).json({ msg: 'Unauthorized' });
+            returnres.status(401).json({ msg: 'Unauthorized' });
         }
     });
 
