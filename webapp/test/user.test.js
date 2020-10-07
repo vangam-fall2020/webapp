@@ -27,7 +27,7 @@ describe('when stubbed', () => {
                 res.headers['content-type'].should.contain('application/json');
                 body = JSON.parse(body);
                 body.status.should.eql('success');
-                body.data[0].email_address.should.eql('jane1.doe@example.com');
+                body.data[0].username.should.eql('jane1.doe@example.com');
                 done();
             });
         });
@@ -39,7 +39,7 @@ describe('when stubbed', () => {
                     password: "Csyenetworks@6225"
                 }
                 if (data.all.success.body.data[0].password != auth.password
-                    && data.all.success.body.data[0].email_address != auth.username) {
+                    && data.all.success.body.data[0].username != auth.username) {
                     const obj = {
                         body: {
                             res: {
@@ -52,7 +52,6 @@ describe('when stubbed', () => {
                                 status: "error",
                                 message: "Unauthorized"
                             }
-
                         },
                         url: `${base}/v1/user/self/`
                     };
@@ -132,12 +131,12 @@ describe('when stubbed', () => {
                 first_name: " Jane1 update",
                 last_name: "Doe1",
                 password: "Csyenetworks@6225",
-                email_address: "jane8.doe@example.com",
+                username: "jane8.doe@example.com",
             };
 
             userService.PutRequest().then((data) => {
                 for (user in data.all.success.body) {
-                    if (user.email_address != options.email_address) {
+                    if (user.username != options.username) {
                         const obj = data.all.failure;
                         this.get.yields(null, obj.res, JSON.stringify(obj.body));
                         break;

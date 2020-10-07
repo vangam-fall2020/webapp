@@ -18,7 +18,7 @@ module.exports = app => {
             var firstName = req.body.first_name;
             var lastName = req.body.last_name;
             var password = req.body.password;
-            var emailAddress = req.body.email_address;
+            var emailAddress = req.body.username;
 
             if (firstName != null && lastName != null && password != null && emailAddress != null
                 && validator.validate(password) == true && emailValidator.validate(emailAddress) == true) {
@@ -32,7 +32,7 @@ module.exports = app => {
                     first_name: firstName,
                     last_name: lastName,
                     password: hashedPassword,
-                    email_address: emailAddress,
+                    username: emailAddress,
                     account_created: account_created,
                     account_updated: account_updated
                 })
@@ -41,12 +41,13 @@ module.exports = app => {
                             id: data.id,
                             first_name: firstName,
                             last_name: lastName,
-                            email_address: emailAddress,
+                            username: emailAddress,
                             account_created: account_created,
                             account_updated: account_updated
                         });
                     })
                     .catch(err => {
+                        console.log("err: ", err);
                         res.status(400).send({
                             message: "Bad Request"
                         });
@@ -81,6 +82,28 @@ module.exports = app => {
         }
     });
 
+    // GET a User with given id.
+    router.get("/:id", (req, res, next) => {
+
+        // Save User in the database
+        User.findByPk(req.params.id)
+            .then(data => {
+                res.status(200).send({
+                    id: data.id,
+                    first_name: data.first_name,
+                    last_name: data.last_name,
+                    username: data.username,
+                    account_created: data.account_created,
+                    account_updated: data.account_updated
+                });
+            })
+            .catch(err => {
+                res.status(404).send({
+                    message: "Not Found"
+                });
+            });
+
+    });
 
     // Update a user
     router.put("/self", userAuth.basicAuth, (req, res) => {
@@ -89,7 +112,7 @@ module.exports = app => {
                 let contentType = req.headers['content-type'];
                 if (contentType == 'application/json') {
                     let password = req.body.password;
-                    let email_address = req.body.email_address;
+                    let username = req.body.username;
                     let first_name = req.body.first_name;
                     let last_name = req.body.last_name;
                     if (password != null && validator.validate(password)) {
@@ -98,20 +121,20 @@ module.exports = app => {
                     } else if (password != null) {
                         return res.status(400).json({ msg: 'Bad Request' });
                     }
-                    if (first_name == null || last_name == null || email_address == null || password == null ||
-                        first_name == "" || last_name == "" || email_address == "" || password == "") {
+                    if (first_name == null || last_name == null || username == null || password == null ||
+                        first_name == "" || last_name == "" || username == "" || password == "") {
                         return res.status(400).json({ msg: 'Bad Request' });
                     } else {
-                        User.findOne({ where: { email_address: res.locals.user.email_address } }).then(data => {
+                        User.findOne({ where: { username: res.locals.user.username } }).then(data => {
                             if (data) {
-                                if (data.email_address == email_address) {
+                                if (data.username == username) {
                                     User.update({
                                         first_name: first_name,
                                         last_name: last_name,
                                         password: hashedPassword,
                                         account_updated: moment().format()
                                     }, {
-                                        where: { email_address: email_address }
+                                        where: { username: username }
                                     }).then(data => {
                                         res.status(204).send();
                                     }).catch(err => {
