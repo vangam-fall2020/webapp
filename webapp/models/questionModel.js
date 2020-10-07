@@ -1,6 +1,4 @@
 const db = require("../models");
-const Users = db.users;
-const Category = db.category;
 
 module.exports = (sequelize, Sequelize) => {
   const Question = sequelize.define("question", {
