@@ -11,7 +11,7 @@ var UserMock = DBConnectionMock.define('users', [{
     "first_name": " Jane1",
     "last_name": "Doe1",
     "password": "Csyenetworks1@6225",
-    "email_address": "jane1.doe@example.com",
+    "username": "jane1.doe@example.com",
     "account_created": "2020-10-01T07:06:56.000Z",
     "account_updated": "2020-10-01T07:09:13.000Z"
 }, {
@@ -19,7 +19,7 @@ var UserMock = DBConnectionMock.define('users', [{
     "first_name": " Jane2",
     "last_name": "Doe2",
     "password": "Csyenetworks2@6225",
-    "email_address": "jane2.doe@example.com",
+    "username": "jane2.doe@example.com",
     "account_created": "2020-10-01T07:06:56.000Z",
     "account_updated": "2020-10-01T07:09:13.000Z"
 }]);
@@ -30,7 +30,7 @@ async function GetUsers() {
 
         UserMock.findOne({
             where: {
-                email_address: 'jane1.doe@example.com',
+                username: 'jane1.doe@example.com',
             },
         }).then(function (user) {
             return resolve({
@@ -50,7 +50,7 @@ async function GetUsers() {
                                     "first_name": user.get('first_name'),
                                     "last_name": user.get('last_name'),
                                     "password": user.get('password'),
-                                    "email_address": user.get('email_address'),
+                                    "username": user.get('username'),
                                     "account_created": user.get('account_created'),
                                     "account_updated": user.get('account_updated')
                                 }
@@ -83,7 +83,7 @@ async function PostRequest() {
 
         UserMock.findOne({
             where: {
-                email_address: 'jane1.doe@example.com',
+                username: 'jane1.doe@example.com',
             },
         }).then(function (user) {
             return resolve({
@@ -103,7 +103,7 @@ async function PostRequest() {
                                     "first_name": " Jane1",
                                     "last_name": "Doe1",
                                     "password": "Csyenetworks@6225",
-                                    "email_address": "jane1.doe@example.com",
+                                    "username": "jane1.doe@example.com",
                                     "account_created": "2020-10-01T07:06:56.000Z",
                                     "account_updated": "2020-10-01T07:09:13.000Z"
                                 }
@@ -151,7 +151,7 @@ async function PutRequest() {
                                 "first_name": " Jane1",
                                 "last_name": "Doe1",
                                 "password": "Csyenetworks1@6225",
-                                "email_address": "jane1.doe@example.com",
+                                "username": "jane1.doe@example.com",
                                 "account_created": "2020-10-01T07:06:56.000Z",
                                 "account_updated": "2020-10-01T07:09:13.000Z"
                             }, {
@@ -159,7 +159,7 @@ async function PutRequest() {
                                 "first_name": " Jane2",
                                 "last_name": "Doe2",
                                 "password": "Csyenetworks2@6225",
-                                "email_address": "jane2.doe@example.com",
+                                "username": "jane2.doe@example.com",
                                 "account_created": "2020-10-01T07:06:56.000Z",
                                 "account_updated": "2020-10-01T07:09:13.000Z"
                             }]

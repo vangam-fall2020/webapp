@@ -7,7 +7,7 @@ const bcrypt = require('bcrypt');
 function basicAuth(req, res, next) {
     let contentType = req.headers['content-type'];
     var authHeader = "";
-    if (req.method == 'GET') {
+    if (req.method == 'GET' || req.method == 'DELETE') {
         authHeader = req.headers.authorization;
     } else {
         if (contentType == 'application/json') {
@@ -24,7 +24,7 @@ function basicAuth(req, res, next) {
     const base64Credentials = authHeader.split(' ')[1];
     const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
     const [username, password] = credentials.split(':');
-    User.findOne({ where: { email_address: username } }).then(data => {
+    User.findOne({ where: { username: username } }).then(data => {
         if (data) {
             bcrypt.compare(password, data.dataValues.password, (err, result) => {
 
