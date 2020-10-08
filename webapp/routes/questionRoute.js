@@ -2,6 +2,7 @@ const db = require("../models");
 const Question = db.question;
 const Category = db.category;
 const Answer = db.answer;
+const questionCategories = db.questionCategories;
 const uuid = require('uuid');
 const moment = require('moment');
 let userAuth = require('../services/authentication');
@@ -27,89 +28,57 @@ module.exports = app => {
                     let category_id = uuid.v4();
 
                     var pattern = new RegExp(/[~`!#$%\^&*+=\-\[\]\\';,/{}|\\":<>\?]/);
-
+                    categories.forEach(cat => {
+                        if (pattern.test(cat.category)) {
+                            return res.status(400).json({ msg: 'Bad Request' });
+                        }
+                    })
                     if (question_text == null || categories == null ||
                         question_text == "" || categories == "") {
                         return res.status(400).json({ msg: 'Bad Request' });
-                    }
-                    else if (pattern.test(categories[0].category)) {
-                        return res.status(400).json({ msg: 'Bad Request' });
-                    }
-                    else {
-                        Category.findOne({ where: { category: categories[0].category.toLowerCase() } })
-                            .then(category => {
-                                if (category) {
-                                    Question.create({
-                                        question_id: id,
-                                        created_timestamp: created_timestamp,
-                                        updated_timestamp: updated_timestamp,
-                                        user_id: user_id,
-                                        question_text: question_text,
-                                    }, {
-                                        include: Category
-                                    })
-                                        .then(question => {
-                                            question.addCategory(category);
-                                            res.status(201).send({
-                                                question_id: question.question_id,
-                                                created_timestamp: question.created_timestamp,
-                                                updated_timestamp: question.updated_timestamp,
-                                                user_id: question.user_id,
-                                                question_text: question.question_text,
-                                                categories: [{
-                                                    category_id: category.category_id,
-                                                    category: category.category
-                                                }]
-                                            });
-                                        })
-                                        .catch(err => {
-                                            console.log("err: ", err);
-                                            res.status(400).send({
-                                                message: "Bad Request"
-                                            });
-                                        });
-                                } else {
-                                    Category.create({
-                                        category_id: category_id,
-                                        category: categories[0].category.toLowerCase()
-                                    }).then((cat) => {
+                    } else {
+                        Question.create({
+                            question_id: id,
+                            created_timestamp: created_timestamp,
+                            updated_timestamp: updated_timestamp,
+                            user_id: user_id,
+                            question_text: question_text,
+                        }, {
+                            include: Category
+                        })
+                            .then(question => {
+                                categories.forEach(cat => {
+                                    Category.findOne({ where: { category: cat.category.toLowerCase() } })
+                                        .then(category => {
+                                            if (category) {
+                                                question.addCategory(category);
+                                            } else {
+                                                Category.create({
+                                                    category_id: category_id,
+                                                    category: cat.category.toLowerCase()
+                                                }).then(data => {
+                                                    question.addCategory(data);
+                                                })
+                                            }
 
-                                        Question.create({
-                                            question_id: id,
-                                            created_timestamp: created_timestamp,
-                                            updated_timestamp: updated_timestamp,
-                                            user_id: user_id,
-                                            question_text: question_text,
-                                        }, {
-                                            include: Category
+                                        }).catch(err => {
+                                            res.status(400).json({ msg: 'Bad Request' });
                                         })
-                                            .then(question => {
-                                                question.addCategory(cat);
-                                                res.status(201).send({
-                                                    question_id: question.question_id,
-                                                    created_timestamp: question.created_timestamp,
-                                                    updated_timestamp: question.updated_timestamp,
-                                                    user_id: question.user_id,
-                                                    question_text: question.question_text,
-                                                    categories: [{
-                                                        category_id: cat.category_id,
-                                                        category: cat.category
-                                                    }]
-                                                });
-                                            })
-                                            .catch(err => {
-                                                res.status(400).send({
-                                                    message: "Bad Request"
-                                                });
-                                            });
-                                    }).catch((err) => {
-                                        res.status(400).send({
-                                            message: "Bad Request"
-                                        });
-                                    });
-                                }
-                            });
-
+                                })
+                                res.status(200).send(
+                                    {
+                                        question_id: question.question_id,
+                                        created_timestamp: question.created_timestamp,
+                                        updated_timestamp: question.updated_timestamp,
+                                        user_id: question.user_id,
+                                        question_text: question.question_text,
+                                        categories: categories,
+                                        answers: []
+                                    }
+                                );
+                            }).catch(err => {
+                                res.status(400).json({ msg: 'Bad Request' });
+                            })
                     }
                 } else {
                     res.status(400).json({ msg: 'Bad Request' });
@@ -125,11 +94,11 @@ module.exports = app => {
     // GET a all questions with given id.
     router.get("/questions", (req, res) => {
 
-        Question.findAll()
+        Question.findAll({ include: Category })
             .then(data => {
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.json(data);
+                res.status(200).send({
+                    data
+                });
             })
             .catch(err => {
                 res.status(404).send({
@@ -165,10 +134,16 @@ module.exports = app => {
             if (Object.keys(req.body).length > 0) {
                 let contentType = req.headers['content-type'];
                 if (contentType == 'application/json') {
+
                     let question_text = req.body.question_text;
                     let categories = req.body.categories;
                     let category_id = uuid.v4();
-
+                    var pattern = new RegExp(/[~`!#$%\^&*+=\-\[\]\\';,/{}|\\":<>\?]/);
+                    categories.forEach(cat => {
+                        if (pattern.test(cat.category)) {
+                            return res.status(400).json({ msg: 'Bad Request' });
+                        }
+                    })
                     if ((question_text == null && categories == null)
                         || (question_text == "" && categories == "")) {
                         return res.status(400).json({ msg: 'Bad Request' });
@@ -177,61 +152,89 @@ module.exports = app => {
                             .then(question => {
                                 if (question) {
                                     if (res.locals.user.id == question.user_id) {
+                                        questionCategories.destroy({ where: { question_id: question.question_id } })
+                                            .then(data => { }).catch(err => { })
                                         if (question_text && categories) {
-                                            Category.findOne({ where: { category: categories[0].category } })
-                                                .then(cat => {
-                                                    if (cat) {
-                                                        cat.update({
-                                                            catogory: cat.catogory
+                                            categories.forEach(cat => {
 
-                                                        }).then({
-
-                                                        }).catch(err => {
-                                                            res.status(400).send({
-                                                                message: "Bad Request"
-                                                            });
-                                                        })
-                                                        question.update({
-
-                                                            updated_timestamp: moment().format(),
-                                                            question_text: question_text,
-
-                                                        }).then(data => {
-                                                            question.addCategory(cat);
-                                                            res.status(204).send({ message: 'No Content' });
-                                                        }).catch(err => {
-                                                            res.status(400).send({
-                                                                message: "Bad Request"
-                                                            });
-                                                        });
-                                                    } else {
-                                                        Category.create({
-                                                            category_id: category_id,
-                                                            category: categories[0].category.toLowerCase()
-                                                        }).then(cat => {
+                                                Category.findOne({ where: { category: cat.category.toLowerCase() } })
+                                                    .then(cat1 => {
+                                                        if (cat1) {
                                                             question.update({
                                                                 updated_timestamp: moment().format(),
                                                                 question_text: question_text,
-
-                                                            }).then(question => {
-                                                                question.addCategory(cat);
-                                                                res.status(204).send({ message: 'No Content' });
+                                                            }).then(que => {
+                                                                que.addCategory(cat1);
                                                             }).catch(err => {
                                                                 res.status(400).send({
                                                                     message: "Bad Request"
                                                                 });
                                                             });
-                                                        }).catch(err => {
-                                                            res.status(400).json({ message: 'Bad request' });
-                                                        })
-                                                    }
-                                                }).catch(err => {
-                                                    res.status(400).json({ message: 'Bad request' });
-                                                });
 
+                                                        } else {
+                                                            Category.create({
+                                                                category_id: category_id,
+                                                                category: cat.category.toLowerCase()
+                                                            }).then(cat2 => {
+                                                                question.update({
+                                                                    updated_timestamp: moment().format(),
+                                                                    question_text: question_text,
+
+                                                                }).then(que => {
+                                                                    que.addCategory(cat2);
+                                                                }).catch(err => {
+                                                                    res.status(400).send({
+                                                                        message: "Bad Request"
+                                                                    });
+                                                                });
+                                                            }).catch(err => {
+                                                                res.status(400).send({
+                                                                    message: "Bad Request"
+                                                                });
+                                                            })
+                                                        }
+                                                    })
+                                                res.status(204).send();
+                                            })
+
+                                        } else if (question_text) {
+                                            question.update({
+
+                                                updated_timestamp: moment().format(),
+                                                question_text: question_text,
+
+                                            }).then(data => {
+                                                res.status(204).send({ message: 'No Content' });
+                                            }).catch(err => {
+                                                res.status(400).send({
+                                                    message: "Bad Request"
+                                                });
+                                            });
+
+                                        } else if (categories) {
+                                            categories.forEach(cat => {
+                                                Category.findOne({ where: { category: cat.category.toLowerCase() } })
+                                                    .then(cat => {
+                                                        if (cat) {
+                                                            question.addCategory(cat);
+                                                        } else {
+                                                            Category.create({
+                                                                category_id: category_id,
+                                                                category: categories[0].category.toLowerCase()
+                                                            }).then(cat1 => {
+                                                                question.addCategory(cat1);
+                                                            }).catch(err => {
+                                                                res.status(400).json({ message: 'Bad request' });
+                                                            })
+                                                        }
+                                                    }).catch(err => {
+                                                        res.status(400).json({ message: 'Bad request' });
+                                                    });
+                                            })
+                                            res.status(204).send({ message: 'No Content' });
                                         }
                                     } else {
-                                        return res.status(400).json({ msg: 'Bad Request' });
+                                        return res.status(401).json({ msg: 'Unauthorized' });
                                     }
                                 } else {
                                     return res.status(404).json({ message: 'Not Found' });
@@ -255,14 +258,25 @@ module.exports = app => {
 
     router.delete("/question/:qid", userAuth.basicAuth, (req, res) => {
         if (res.locals.user) {
-
             Question.findByPk(req.params.qid)
                 .then(question => {
                     if (res.locals.user.id == question.user_id) {
-                        question.destroy({ where: { question_id: req.params.qid } })
-                            .then(data => {
-                                res.status(204).send();
+                        Answer.findAll({ where: { question_id: question.question_id } })
+                            .then(answer => {
+                                if (answer.length !== 0) {
+                                    return res.status(400).json({ msg: 'Bad Request' });
+                                } else {
+                                    question.destroy({ where: { question_id: req.params.qid } })
+                                        .then(data => {
+                                            res.status(204).send();
+                                        }).catch(err => {
+                                        });
+
+                                }
                             }).catch(err => {
+                                res.status(400).send({
+                                    message: "Bad Request"
+                                });
                             });
                     } else {
                         return res.status(400).json({ msg: 'Bad Request' });
