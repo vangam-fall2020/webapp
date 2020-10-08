@@ -47,7 +47,6 @@ module.exports = app => {
                         });
                     })
                     .catch(err => {
-                        console.log("err: ", err);
                         res.status(400).send({
                             message: "Bad Request"
                         });
