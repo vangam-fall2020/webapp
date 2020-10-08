@@ -173,7 +173,7 @@ module.exports = app => {
 
                                                         } else {
                                                             Category.create({
-                                                                category_id: category_id,
+                                                                category_id: uuid.v4(),
                                                                 category: cat.category.toLowerCase()
                                                             }).then(cat2 => {
                                                                 question.update({
@@ -211,24 +211,23 @@ module.exports = app => {
                                                 });
                                             });
 
-                                        } else if (categories) {
+                                        } else if (categories.length !== 0) {
                                             categories.forEach(cat => {
                                                 Category.findOne({ where: { category: cat.category.toLowerCase() } })
-                                                    .then(cat => {
-                                                        if (cat) {
-                                                            question.addCategory(cat);
+                                                    .then(cat1 => {
+                                                        if (cat1) {
+                                                            question.addCategory(cat1);
                                                         } else {
                                                             Category.create({
-                                                                category_id: category_id,
-                                                                category: categories[0].category.toLowerCase()
-                                                            }).then(cat1 => {
-                                                                question.addCategory(cat1);
+                                                                category_id: uuid.v4(),
+                                                                category: cat.category.toLowerCase()
+                                                            }).then(cat2 => {
+                                                                question.addCategory(cat2);
                                                             }).catch(err => {
                                                                 res.status(400).json({ message: 'Bad request' });
                                                             })
                                                         }
                                                     }).catch(err => {
-                                                        res.status(400).json({ message: 'Bad request' });
                                                     });
                                             })
                                             res.status(204).send({ message: 'No Content' });
