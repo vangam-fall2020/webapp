@@ -28,7 +28,7 @@ const log4js = require('log4js');
 module.exports = app => {
 
     // Attach file to question
-    router.post("/:qid/image", userAuth.basicAuth, (req, res) => {
+    router.post("/:qid/file", userAuth.basicAuth, (req, res) => {
         sdc.increment('GET File Triggered');
 
         if (res.locals.user) {
