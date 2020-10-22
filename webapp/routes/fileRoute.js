@@ -17,11 +17,6 @@ require('dotenv').config({ path: '/home/ubuntu/var/.env' });
 const SDC = require('statsd-client'),
     sdc = new SDC({ host: 'localhost', port: 8125 });
 const log4js = require('log4js');
-// log4js.configure({
-//     appenders: { logs: { type: 'file', filename: '/home/ubuntu/webapp/logs/webapp.log' } },
-//     categories: { default: { appenders: ['logs'], level: 'info' } }
-// });
-// const logger = log4js.getLogger('logs');
 
 
 // Api calls to protected routes
