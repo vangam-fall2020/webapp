@@ -94,12 +94,7 @@ module.exports = app => {
     // GET a all questions with given id.
     router.get("/questions", (req, res) => {
 
-        Question.findAll({
-            include: [{
-                model: Category,
-                through: { atributes: [] }
-            }, Answer]
-        })
+        Question.findAll({ include: Category , Answer})
             .then(data => {
                 res.status(200).send({
                     data

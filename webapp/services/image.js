@@ -22,7 +22,7 @@ function getEC2Credentials(rolename) {
 };
 
 const s3 = new aws.S3();
-getEC2Credentials('EC2-CSYE6225-test').then((credentials) => {
+getEC2Credentials('EC2-CSYE6225').then((credentials) => {
     console.log("\n----- credentials ------", credentials);
     aws.config.accessKeyId = credentials.AccessKeyId;
     aws.config.secretAccessKey = credentials.SecretAccessKey;
@@ -75,7 +75,7 @@ function getMetaDataFromS3(cb) {
     };
     s3.headObject(params, function (err, data) {
         if (err) {
-            console.log("err : ", err);
+            console.log("err 4: ", err);
             cb(null);
         }
         else {
