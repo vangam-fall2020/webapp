@@ -36,6 +36,7 @@ module.exports = app => {
                                         user_id: user_id,
                                         answer_text: answer_text
                                     }).then(answer => {
+                                        question.addAnswer(answer);
                                         res.status(201).send({
                                             answer_id: answer.answer_id,
                                             question_id: question.question_id,

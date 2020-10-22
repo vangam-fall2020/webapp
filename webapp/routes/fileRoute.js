@@ -14,9 +14,6 @@ const { check, validationResult } = require('express-validator');
 const { upload, deleteFromS3, getMetaDataFromS3 } = require('../services/image');
 const singleUpload = upload.single('image');
 require('dotenv').config({ path: '/home/ubuntu/var/.env' });
-const SDC = require('statsd-client'),
-    sdc = new SDC({ host: 'localhost', port: 8125 });
-const log4js = require('log4js');
 
 
 // Api calls to protected routes
@@ -24,7 +21,6 @@ module.exports = app => {
 
     // Attach file to question
     router.post("/:qid/file", userAuth.basicAuth, (req, res) => {
-        sdc.increment('GET File Triggered');
 
         if (res.locals.user) {
             let timer = new Date();
@@ -38,46 +34,43 @@ module.exports = app => {
                         if (question && question.user_id == res.locals.user.id) {
                             File.findOne({ where: { question_id: question_id } })
                                 .then(file => {
-                                    if (file.s3_object_name == req.file.key) {
-                                        return res.status(500).json({ msg: 'Delete existing file before uploading to same image' })
-                                    } else {
 
-                                        singleUpload(req, res, (err) => {
-                                            if (err) {
+                                    singleUpload(req, res, (err) => {
+                                        if (err) {
 
-                                                res.status(400).send({
-                                                    message: "Bad Request"
-                                                });
-                                            } else {
-                                                let image = {
-                                                    'id': uuid.v4(),
-                                                    'url': req.file.location
-                                                };
+                                            res.status(400).send({
+                                                message: "Bad Request"
+                                            });
+                                        } else {
+                                            let image = {
+                                                'id': uuid.v4(),
+                                                'url': req.file.location
+                                            };
 
-                                                getMetaDataFromS3(function (metadata) {
-                                                    if (metadata != null) {
+                                            getMetaDataFromS3(function (metadata) {
+                                                if (metadata != null) {
 
-                                                        File.create({
-                                                            file_id: uuid.v4(),
-                                                            file_name: req.file.originalname,
-                                                            s3_object_name: req.file.key,
-                                                            created_date: moment().format(),
-                                                            question_id: question_id,
-                                                            metadata: req.file
+                                                    File.create({
+                                                        file_id: uuid.v4(),
+                                                        file_name: req.file.originalname,
+                                                        s3_object_name: req.file.key,
+                                                        created_date: moment().format(),
+                                                        question_id: question_id,
+                                                        metadata: req.file
+                                                    })
+                                                        .then(image => {
+
+                                                            return res.status(201).send({ image });
                                                         })
-                                                            .then(image => {
+                                                        .catch(err => {
 
-                                                                return res.status(201).send({ image });
-                                                            })
-                                                            .catch(err => {
+                                                            return res.status(500).json({ msg: 'Bad Request' });
+                                                        })
+                                                }
+                                            });
+                                        }
+                                    })
 
-                                                                return res.status(500).json({ msg: 'Some error while storing image data to DB' });
-                                                            })
-                                                    }
-                                                });
-                                            }
-                                        })
-                                    }
                                 })
                                 .catch(err => {
                                     console.log("error: ", err);
@@ -111,8 +104,8 @@ module.exports = app => {
                                     if (file.question_id == req.params.qid) {
                                         let imageId = file.s3_object_name;
 
-                                        deleteFromS3(imageId, function (res) {
-                                            if (res != null) {
+                                        deleteFromS3(imageId, function (res1) {
+                                            if (res1 != null) {
                                                 File.destroy({ where: { file_id: req.params.fid } })
                                                     .then(file => {
 
@@ -160,8 +153,8 @@ module.exports = app => {
                                         file.answer_id == req.params.aid) {
                                         let imageId = file.s3_object_name;
 
-                                        deleteFromS3(imageId, function (res) {
-                                            if (res != null) {
+                                        deleteFromS3(imageId, function (res1) {
+                                            if (res1 != null) {
                                                 File.destroy({ where: { file_id: req.params.fid } })
                                                     .then(file => {
 
@@ -196,7 +189,6 @@ module.exports = app => {
 
     // Post a file to answer
     router.post("/:qid/answer/:aid/file", userAuth.basicAuth, (req, res) => {
-        sdc.increment('GET File Triggered');
 
         if (res.locals.user) {
             let timer = new Date();
