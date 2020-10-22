@@ -23,13 +23,12 @@ function getEC2Credentials(rolename) {
 
 const s3 = new aws.S3();
 getEC2Credentials('EC2-CSYE6225').then((credentials) => {
-    console.log("\n----- credentials ------", credentials);
+    console.log("credentials:  ", credentials);
     aws.config.accessKeyId = credentials.AccessKeyId;
     aws.config.secretAccessKey = credentials.SecretAccessKey;
     aws.config.sessionToken = credentials.Token;
 }).catch((err) => {
     console.log("err: ", err);
-    console.log("\n-----errrrr------", err);
 });
 
 let objId;
@@ -45,7 +44,7 @@ let upload = multer({
                 objId = imageName + '_' + Date.now().toString();
                 cb(null, objId);
             } else {
-                cb("Error:image upload only supports the following imagetypes - " + imagetypes);
+                cb("Image upload only supports the following imagetypes - " + imagetypes);
 
             }
         }
