@@ -1,7 +1,7 @@
 module.exports = {
-  HOST: "localhost",
-  USER: "root",
-  PASSWORD: "Fall2020Csye@6225",
+  HOST: process.env.DB_RDS_HOST,
+  USER: process.env.DB_RDS_USERNAME,
+  PASSWORD: process.env.DB_RDS_PASSWORD,
   DB: "webapp",
   dialect: "mysql",
   pool: {
