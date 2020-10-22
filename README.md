@@ -43,6 +43,11 @@ npm run start
     * POST request: localhost:8080/v1/question/{question_id}/answer
     * PUT request: localhost:8080/v1/question/{question_id}/answer/{answer_id}
     * DELETE request: localhost:8080/v1/question/{question_id}/answer/{answer_id}
+* File
+    * POST request: localhost:8080/v1/question/{question_id}/file
+    * DELETE request: localhost:8080/v1/question/{question_id}/file/{file_id}
+    * POST request: localhost:8080/v1/question/{question_id}/answer/{answer_id}/file/{file_id}
+    * DELETE request: localhost:8080/v1/question/{question_id}/answer/{answer_id}/file
 
 
 ### Running Tests

@@ -41,48 +41,52 @@ module.exports = app => {
                 Question.findByPk(question_id)
                     .then(question => {
                         if (question && question.user_id == res.locals.user.id) {
-                            singleUpload(req, res, (err) => {
-                                if (err) {
+                            File.findOne({ where: { question_id: question_id } })
+                                .then(file => {
 
-                                    res.status(400).send({
-                                        message: "Bad Request"
-                                    });
-                                } else {
-                                    let image = {
-                                        'id': uuid.v4(),
-                                        'url': req.file.location
-                                    };
 
-                                    getMetaDataFromS3(function (metadata) {
-                                        if (metadata != null) {
+                                    singleUpload(req, res, (err) => {
+                                        if (err) {
 
-                                            File.findOne({ where: { question_id: question_id } })
-                                                .then(file => {
-                                                    if (file) {
-                                                        return res.status(500).json({ msg: 'Delete existing file before uploading to same question' });
-                                                    }
-                                                })
-                                            File.create({
-                                                file_id: uuid.v4(),
-                                                file_name: req.file.originalname,
-                                                s3_object_name: req.file.key,
-                                                created_date: moment().format(),
-                                                question_id: question_id,
-                                                metadata: req.file
-                                            })
-                                                .then(image => {
+                                            res.status(400).send({
+                                                message: "Bad Request"
+                                            });
+                                        } else {
+                                            let image = {
+                                                'id': uuid.v4(),
+                                                'url': req.file.location
+                                            };
 
-                                                    return res.status(201).send({ image });
-                                                })
-                                                .catch(err => {
+                                            getMetaDataFromS3(function (metadata) {
+                                                if (metadata != null) {
 
-                                                    return res.status(500).json({ msg: 'Some error while storing image data to DB' });
-                                                })
+                                                    //                                           
+                                                    File.create({
+                                                        file_id: uuid.v4(),
+                                                        file_name: req.file.originalname,
+                                                        s3_object_name: req.file.key,
+                                                        created_date: moment().format(),
+                                                        question_id: question_id,
+                                                        metadata: req.file
+                                                    })
+                                                        .then(image => {
+
+                                                            return res.status(201).send({ image });
+                                                        })
+                                                        .catch(err => {
+
+                                                            deleteFromS3(req.file.key, function (res1) {
+                                                                if (res1 != null) {
+                                                                    return res.status(400).json({ msg: 'Bad Request' });
+                                                                }
+                                                            });
+
+                                                        })
+                                                }
+                                            });
                                         }
-                                    });
-                                }
-                            })
-
+                                    })
+                                })
                         } else {
                             res.status(401).json({ msg: 'Unauthorized' });
                         }
@@ -111,8 +115,8 @@ module.exports = app => {
                                     if (file.question_id == req.params.qid) {
                                         let imageId = file.s3_object_name;
 
-                                        deleteFromS3(imageId, function (res) {
-                                            if (res != null) {
+                                        deleteFromS3(imageId, function (res1) {
+                                            if (res1 != null) {
                                                 File.destroy({ where: { file_id: req.params.fid } })
                                                     .then(file => {
 
@@ -226,20 +230,33 @@ module.exports = app => {
                                                 File.findOne({ where: { question_id: req.params.qid } })
                                                     .then(file => {
                                                         if (file) {
-                                                            if (file.answer_id == answer.answer_id) {
-                                                                return res.status(500).json({ msg: 'Delete image before updating new file' });
+                                                            if (file.answer_id == answer.answer_id && file.file_name == req.file.originalname) {
+                                                                deleteFromS3(req.file.key, function (res1) {
+                                                                    if (res1 != null) {
+                                                                        return res.status(400).json({ msg: 'Bad Request' });
+                                                                    }
+                                                                });
+
                                                             } else {
-                                                                file.update({
-                                                                    metadata: req.file,
-                                                                    answer_id: answer.answer_id
+                                                                File.create({
+                                                                    file_id: uuid.v4(),
+                                                                    file_name: req.file.originalname,
+                                                                    s3_object_name: req.file.key,
+                                                                    created_date: moment().format(),
+                                                                    question_id: answer.question_id,
+                                                                    metadata: req.file
                                                                 })
+
                                                                     .then(image => {
 
                                                                         return res.status(201).send({ image });
                                                                     })
                                                                     .catch(err => {
-
-                                                                        return res.status(400).json({ msg: 'Bad Request' });
+                                                                        deleteFromS3(req.file.key, function (res1) {
+                                                                            if (res1 != null) {
+                                                                                return res.status(400).json({ msg: 'Bad Request' });
+                                                                            }
+                                                                        });
                                                                     })
                                                             }
                                                         } else {
@@ -258,8 +275,11 @@ module.exports = app => {
                                                                     return res.status(201).send({ image });
                                                                 })
                                                                 .catch(err => {
-
-                                                                    return res.status(400).json({ msg: 'Bad Request' });
+                                                                    deleteFromS3(req.file.key, function (res1) {
+                                                                        if (res1 != null) {
+                                                                            return res.status(400).json({ msg: 'Bad Request' });
+                                                                        }
+                                                                    });
                                                                 })
                                                         }
                                                     })

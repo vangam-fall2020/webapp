@@ -29,6 +29,7 @@ module.exports = app => {
                             .then(question => {
                                 if (question) {
                                     Answer.create({
+                                        question_question_id: question_id,
                                         question_id: question.question_id,
                                         created_timestamp: moment().format(),
                                         updated_timestamp: moment().format(),
