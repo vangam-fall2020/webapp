@@ -2,7 +2,6 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 
-
 const app = express();
 
 var corsOptions = {
@@ -11,11 +10,6 @@ var corsOptions = {
 
 const db = require("./webapp/models");
 db.sequelize.sync();
-
-// to drop existing tables and resync database
-// db.sequelize.sync({ force: true }).then(() => {
-//     console.log("Drop and re-sync db.");
-//   });
 
 app.use(cors(corsOptions));
 
@@ -31,6 +25,7 @@ app.get("/", (req, res) => {
 require("./webapp/routes/userRoute.js")(app);
 require("./webapp/routes/questionRoute.js")(app);
 require("./webapp/routes/answerRoute.js")(app);
+require("./webapp/routes/fileRoute.js")(app);
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
