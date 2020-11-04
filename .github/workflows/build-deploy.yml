@@ -6,7 +6,6 @@ env:
   CODEDEPLOY_APPLICATION_NAME: csye6225-webapp
   CODEDEPLOY_APPLICATION_DEPLOYMENT_GROUP_NAME: csye6225-webapp-deployment
   AWS_REGION: us-east-1
-  CODEDEPLOY_S3_BUCKET: codedeploy.dev.manasav.me
 
 on:
   push:
@@ -71,16 +70,16 @@ jobs:
 
       - name: Copy Artifact to S3
         run: |
-          aws s3 sync ./codedeploy_artifact s3://${{env.CODE_DEPLOY_S3_BUCKET}}
+          aws s3 sync ./codedeploy_artifact s3://${{secrets.CODE_DEPLOY_S3_BUCKET}}
       
       - name: CodeDeploy API call
         run: |
           output=$(aws deploy create-deployment \
-            --application-name ${{ env.CODEDEPLOY_APPLICATION_NAME }} \
+            --application-name ${{ secrets.CODEDEPLOY_APPLICATION_NAME }} \
             --deployment-config-name CodeDeployDefault.AllAtOnce \
             --deployment-group-name ${{ env.CODEDEPLOY_APPLICATION_DEPLOYMENT_GROUP_NAME }} \
             --region ${{ env.AWS_REGION }} \
-            --s3-location bucket=${{env.CODE_DEPLOY_S3_BUCKET}},bundleType=zip,key=${{ env.ARTIFACT_NAME }}.zip \
+            --s3-location bucket=${{secrets.CODE_DEPLOY_S3_BUCKET}},bundleType=zip,key=${{ env.ARTIFACT_NAME }}.zip \
             --output json)
           
             echo $output
