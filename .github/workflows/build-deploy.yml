@@ -13,8 +13,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
-
+  ci_cd:
     runs-on: ubuntu-latest
 
     strategy:
@@ -23,14 +22,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - run: npm ci
-    - run: npm test webapp/test/user.test.js
- 
-
     - name: Install AWS CLI
       run: |
         curl 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip' -o 'awscliv2.zip'
