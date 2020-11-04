@@ -4,6 +4,8 @@ whoami
 aws configure set default.region us-east-1
 aws configure list
 
-cd /home/ubuntu/webapp
+cd ~
+sudo chown -R ubuntu:ubuntu webapp
+cd webapp
 sudo npm install
-sudo nohup npm start >> app.log 2>&1 &
+cd ~
