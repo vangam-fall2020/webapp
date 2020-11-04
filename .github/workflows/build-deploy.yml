@@ -9,19 +9,16 @@ env:
   CODEDEPLOY_S3_BUCKET: codedeploy.dev.manasav.me
 
 on:
-  pull_request:
+  push:
     branches: [ master ]
 
 jobs:
   ci_cd:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [10.x]
-
     steps:
     - uses: actions/checkout@v2
+
     - name: Install AWS CLI
       run: |
         curl 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip' -o 'awscliv2.zip'
