@@ -46,7 +46,6 @@ jobs:
       
       - name: Clean node_modules
         run: |
-          cd webapp
           sudo rm -r node_modules
       
       - name: Zip Artifact
