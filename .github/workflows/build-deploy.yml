@@ -2,7 +2,7 @@
 name: Build and Deploy WebApp
 
 env:
-  ARTIFACT_NAME: csye6225-webapp-${{github.run_number}}.zip
+  ARTIFACT_NAME: csye6225-webapp-${{github.run_number}}
   CODEDEPLOY_APPLICATION_NAME: csye6225-webapp
   CODEDEPLOY_APPLICATION_DEPLOYMENT_GROUP_NAME: csye6225-webapp-deployment
   AWS_REGION: us-east-1
@@ -52,12 +52,14 @@ jobs:
         run: |
           echo "${{env.ARTIFACT_NAME}}"
           pwd
+          ls -al
           mkdir -p codedeploy_artifact
-          pwd
-          zip -r ${{ env.ARTIFACT_NAME }}.zip ../webapp . codedeploy/*.sh appspec.yml
           ls -al
           pwd
-          mv ${{ env.ARTIFACT_NAME }} codedeploy_artifact
+          zip -r ${{ env.ARTIFACT_NAME }}.zip ../webapp codedeploy/*.sh appspec.yml
+          ls -al
+          pwd
+          mv ${{ env.ARTIFACT_NAME }}.zip codedeploy_artifact
           pwd
           ls -al
           cd codedeploy_artifact
