@@ -63,19 +63,20 @@ jobs:
     - name: Copy Artifact to S3
       run: |
         aws s3 sync ./codedeploy_artifact s3://${secrets.CODE_DEPLOY_S3_BUCKET}
+    
     - name: CodeDeploy API call
       run: |
         output=$(aws deploy create-deployment \
-       --application-name ${{ env.CODEDEPLOY_APPLICATION_NAME }} \
-       --deployment-config-name CodeDeployDefault.AllAtOnce \
-       --deployment-group-name ${{ env.CODEDEPLOY_APPLICATION_DEPLOYMENT_GROUP_NAME }} \
-       --region ${{ env.AWS_REGION }} \
-       --s3-location bucket=${{env.CODE_DEPLOY_S3_BUCKET}},bundleType=zip,key=${{ env.ARTIFACT_NAME }}.zip \
-       --output json)
+          --application-name ${{ env.CODEDEPLOY_APPLICATION_NAME }} \
+          --deployment-config-name CodeDeployDefault.AllAtOnce \
+          --deployment-group-name ${{ env.CODEDEPLOY_APPLICATION_DEPLOYMENT_GROUP_NAME }} \
+          --region ${{ env.AWS_REGION }} \
+          --s3-location bucket=${{env.CODE_DEPLOY_S3_BUCKET}},bundleType=zip,key=${{ env.ARTIFACT_NAME }}.zip \
+          --output json)
         
-       echo $output
+          echo $output
 
-       dId=$(echo $output | jq -r '.deploymentId')
+          dId=$(echo $output | jq -r '.deploymentId')
 
-       as deploy wait deployment-successful --deployment-id $dId
+          as deploy wait deployment-successful --deployment-id $dId
      
