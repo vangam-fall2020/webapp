@@ -71,7 +71,7 @@ jobs:
 
       - name: Copy Artifact to S3
         run: |
-          aws s3 sync ./codedeploy_artifact s3://${env.CODE_DEPLOY_S3_BUCKET}
+          aws s3 sync ./codedeploy_artifact s3://${{env.CODE_DEPLOY_S3_BUCKET}}
       
       - name: CodeDeploy API call
         run: |
