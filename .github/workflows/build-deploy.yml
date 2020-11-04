@@ -1,0 +1,90 @@
+
+name: Build and Deploy WebApp
+
+env:
+  ARTIFACT_NAME: csye6225-webapp-${{github.run_number}}.zip
+  CODEDEPLOY_APPLICATION_NAME: csye6225-webapp
+  CODEDEPLOY_APPLICATION_DEPLOYMENT_GROUP_NAME: csye6225-webapp-deployment
+  AWS_REGION: us-east-1
+  CODEDEPLOY_S3_BUCKET: codedeploy.dev.manasav.me
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [10.x]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm ci
+    - run: npm test webapp/test/user.test.js
+ 
+
+    - name: Install AWS CLI
+      run: |
+        curl 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip' -o 'awscliv2.zip'
+        unzip awscliv2.zip
+        sudo ./aws/install
+
+     
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{env.AWS_REGION}}
+    
+    - name: Clean node_modules
+    - run: |
+        cd webapp
+        sudo rm -r node_modules
+    
+    - name: Zip Artifact
+      run: |
+        echo "${{ARTIFACT_NAME}}"
+        pwd
+        mkdir -p codedeploy_artifact
+        pwd
+        zip -r ${{ env.ARTIFACT_NAME }}.zip ../webapp . codedeploy/*.sh appspec.yml
+        ls -al
+        pwd
+        mv ${{ env.ARTIFACT_NAME }} codedeploy_artifact
+        pwd
+        ls -al
+        cd codedeploy_artifact
+        pwd
+        ls -al
+        cd ..
+        pwd
+        ls -al
+
+    - name: Copy Artifact to S3
+      run: |
+        aws s3 sync ./codedeploy_artifact s3://${secrets.CODE_DEPLOY_S3_BUCKET}
+    - name: CodeDeploy API call
+      run: |
+        output=$(aws deploy create-deployment \
+       --application-name ${{ env.CODEDEPLOY_APPLICATION_NAME }} \
+       --deployment-config-name CodeDeployDefault.AllAtOnce \
+       --deployment-group-name ${{ env.CODEDEPLOY_APPLICATION_DEPLOYMENT_GROUP_NAME }} \
+       --region ${{ env.AWS_REGION }} \
+       --s3-location bucket=${{env.CODE_DEPLOY_S3_BUCKET}},bundleType=zip,key=${{ env.ARTIFACT_NAME }}.zip \
+       --output json)
+        
+       echo $output
+
+       dId=$(echo $output | jq -r '.deploymentId')
+
+       as deploy wait deployment-successful --deployment-id $dId
+     

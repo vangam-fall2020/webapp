@@ -59,12 +59,12 @@ module.exports = app => {
                                                         metadata: req.file
                                                     })
                                                         .then(image => {
-
+                                                            question.addFile(image);
                                                             return res.status(201).send({ image });
                                                         })
                                                         .catch(err => {
 
-                                                            return res.status(500).json({ msg: 'Bad Request' });
+                                                            return res.status(400).json({ msg: 'Bad Request' });
                                                         })
                                                 }
                                             });
@@ -111,7 +111,7 @@ module.exports = app => {
 
                                                         return res.status(201).json({ msg: "No Content" });
                                                     }).catch(err => {
-                                                        return res.status(500).json({ msg: err });
+                                                        return res.status(400).json({ msg: err });
                                                     })
                                             }
                                         });
@@ -160,7 +160,7 @@ module.exports = app => {
 
                                                         return res.status(201).json({ msg: "No Content" });
                                                     }).catch(err => {
-                                                        return res.status(500).json({ msg: err });
+                                                        return res.status(400).json({ msg: err });
                                                     })
                                             }
                                         });
@@ -219,7 +219,7 @@ module.exports = app => {
                                                     .then(file => {
                                                         if (file) {
                                                             if (file.answer_id == answer.answer_id) {
-                                                                return res.status(500).json({ msg: 'Delete image before updating new file' });
+                                                                return res.status(400).json({ msg: 'Delete image before updating new file' });
                                                             } else {
                                                                 file.update({
                                                                     metadata: req.file,
@@ -246,7 +246,7 @@ module.exports = app => {
                                                             })
 
                                                                 .then(image => {
-
+                                                                    answer.addFile(image);
                                                                     return res.status(201).send({ image });
                                                                 })
                                                                 .catch(err => {
