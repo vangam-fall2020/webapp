@@ -3,14 +3,22 @@ const multer = require('multer');
 const multerS3 = require('multer-s3');
 const Config = require('../config/config');
 
+const log4js = require('log4js');
+	log4js.configure({
+	  appenders: { logs: { type: 'file', filename: '/home/manasa/webapp/logs/webapp.log' } },
+	  categories: { default: { appenders: ['logs'], level: 'info' } }
+    });
+const logger = log4js.getLogger('logs');
+
 //global common variables
-var imageDir = Config.image.imageBucket;
+var imageDir = Config.IMAGE_BUCKET;
 
 var metadata = new aws.MetadataService();
 function getEC2Credentials(rolename) {
     var promise = new Promise((resolve, reject) => {
         metadata.request('/latest/meta-data/iam/security-credentials/' + rolename, function (err, data) {
             if (err) {
+                logger.fatal(err);
                 reject(err);
             } else {
                 resolve(JSON.parse(data));
@@ -23,11 +31,13 @@ function getEC2Credentials(rolename) {
 
 const s3 = new aws.S3();
 getEC2Credentials('EC2-CSYE6225').then((credentials) => {
+    logger.info('Successfully retrieved AWS credentials');
     console.log("credentials:  ", credentials);
     aws.config.accessKeyId = credentials.AccessKeyId;
     aws.config.secretAccessKey = credentials.SecretAccessKey;
     aws.config.sessionToken = credentials.Token;
 }).catch((err) => {
+    logger.fatal(err);
     console.log("err: ", err);
 });
 
@@ -44,8 +54,8 @@ let upload = multer({
                 objId = imageName + '_' + Date.now().toString();
                 cb(null, objId);
             } else {
+                logger.error('Upload Image of type - '+ imagetypes);
                 cb("Image upload only supports the following imagetypes - " + imagetypes);
-
             }
         }
     })
@@ -61,7 +71,7 @@ function deleteFromS3(imageId, cb) {
             cb(data);
         }
         else {
-            console.log("err : ", err);
+            logger.fatal(err);
             cb(null);
         }
     });
@@ -74,7 +84,7 @@ function getMetaDataFromS3(cb) {
     };
     s3.headObject(params, function (err, data) {
         if (err) {
-            console.log("err 4: ", err);
+            logger.fatal(err);
             cb(null);
         }
         else {
