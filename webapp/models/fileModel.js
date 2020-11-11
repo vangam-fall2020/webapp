@@ -1,8 +1,7 @@
 module.exports = (sequelize, Sequelize) => {
     const File = sequelize.define("file", {
         file_name: {
-            type: Sequelize.STRING,
-            unique: true
+            type: Sequelize.STRING
         },
         s3_object_name: {
             type: Sequelize.STRING

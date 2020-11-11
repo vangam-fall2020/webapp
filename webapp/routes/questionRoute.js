@@ -2,6 +2,7 @@ const db = require("../models");
 const Question = db.question;
 const Category = db.category;
 const Answer = db.answer;
+const File = db.file;
 const questionCategories = db.questionCategories;
 const uuid = require('uuid');
 const moment = require('moment');
@@ -11,12 +12,12 @@ const { category } = require("../models");
 const router = require("express").Router();
 
 const SDC = require('statsd-client'),
-sdc = new SDC({host: 'localhost' , port:8125});
+    sdc = new SDC({ host: 'localhost', port: 8125 });
 const log4js = require('log4js');
-	log4js.configure({
-	  appenders: { logs: { type: 'file', filename: '/home/ubuntu/webapp/logs/webapp.log' } },
-	  categories: { default: { appenders: ['logs'], level: 'info' } }
-    });
+log4js.configure({
+    appenders: { logs: { type: 'file', filename: '/home/ubuntu/webapp/logs/webapp.log' } },
+    categories: { default: { appenders: ['logs'], level: 'info' } }
+});
 const logger = log4js.getLogger('logs');
 
 // Api calls to protected routes
@@ -47,7 +48,7 @@ module.exports = app => {
                     })
                     if (question_text == null || categories == null ||
                         question_text == "" || categories == "") {
-                            logger.error('Input fields should not be null');
+                        logger.error('Input fields should not be null');
                         return res.status(400).json({ msg: 'Bad Request' });
                     } else {
                         let dbtimer = new Date();
@@ -83,7 +84,7 @@ module.exports = app => {
                                             logger.error('Category not found');
                                             res.status(400).json({ msg: 'Bad Request' });
                                         })
-                                        sdc.timing('get.categorydb.timer', dbtimerCategory);
+                                    sdc.timing('get.categorydb.timer', dbtimerCategory);
                                 })
                                 res.status(200).send(
                                     {
@@ -97,10 +98,10 @@ module.exports = app => {
                                     }
                                 );
                             }).catch(err => {
-                                logger.error('Error in creating question '+ err);
+                                logger.error('Error in creating question ' + err);
                                 res.status(400).json({ msg: 'Bad Request' });
                             })
-                            sdc.timing('post.questiondb.timer', dbtimer);
+                        sdc.timing('post.questiondb.timer', dbtimer);
                     }
                 } else {
                     logger.error('Request type must be JSON');
@@ -110,7 +111,7 @@ module.exports = app => {
                 res.status(400).json({ msg: 'Bad Request' });
             }
         } else {
-            logger.error('Unauthorized');
+            logger.warn('Unauthorized');
             res.status(401).json({ msg: 'Unauthorized' });
         }
         sdc.timing('post.question.timer', timer);
@@ -124,7 +125,7 @@ module.exports = app => {
             include: [{
                 model: Category,
                 through: { atributes: [] }
-            }, Answer]
+            }, Answer, File]
         })
             .then(data => {
                 res.status(200).send({
@@ -132,20 +133,20 @@ module.exports = app => {
                 });
             })
             .catch(err => {
-                logger.error('Error in retrieving all questions'+ err);
+                logger.error('Error in retrieving all questions' + err);
                 res.status(404).send({
                     message: "Not Found"
                 });
             });
-            sdc.timing('get.question.timer', timer);
-            sdc.timing('get.questiondb.timer', timer);
+        sdc.timing('get.question.timer', timer);
+        sdc.timing('get.questiondb.timer', timer);
     });
 
     // GET a Question with given id.
     router.get("/question/:id", (req, res) => {
         sdc.increment('GET Question Triggered');
         let timer = new Date();
-        Question.findByPk(req.params.id, { include: Category })
+        Question.findByPk(req.params.id, { include: [Category, File] })
             .then(data => {
                 let dbtimer = new Date();
                 Answer.findAll({ where: { question_id: data.question_id } })
@@ -157,17 +158,17 @@ module.exports = app => {
                             data
                         });
                     })
-                    sdc.timing('get.answer.timer', timer);
-                    sdc.timing('get.answerdb.timer', timer);
+                sdc.timing('get.answer.timer', timer);
+                sdc.timing('get.answerdb.timer', timer);
             })
             .catch(err => {
-                logger.error('Invalid question Id: '+ req.params.id);
+                logger.error('Invalid question Id: ' + req.params.id);
                 res.status(404).send({
                     message: "Not Found"
                 });
             });
-            sdc.timing('get.question.timer', timer);
-            sdc.timing('get.questiondb.timer', timer);
+        sdc.timing('get.question.timer', timer);
+        sdc.timing('get.questiondb.timer', timer);
 
     });
     // Update a Question
@@ -191,7 +192,7 @@ module.exports = app => {
                     })
                     if ((question_text == null && categories == null)
                         || (question_text == "" && categories == "")) {
-                            logger.error('Input fileds should not be null');
+                        logger.error('Input fileds should not be null');
                         return res.status(400).json({ msg: 'Bad Request' });
                     } else {
                         let dbtimer = new Date();
@@ -214,12 +215,12 @@ module.exports = app => {
                                                             }).then(que => {
                                                                 que.addCategory(cat1);
                                                             }).catch(err => {
-                                                                logger.error('Question not updated: '+ err);
+                                                                logger.error('Question not updated: ' + err);
                                                                 res.status(400).send({
                                                                     message: "Bad Request"
                                                                 });
                                                             });
-                                                            sdc.timing('put.questiondb.timer', dbtimer1); 
+                                                            sdc.timing('put.questiondb.timer', dbtimer1);
 
                                                         } else {
                                                             let dbtimer1 = new Date();
@@ -242,7 +243,7 @@ module.exports = app => {
                                                                 });
                                                                 sdc.timing('put.questiondb.timer', queTimer);
                                                             }).catch(err => {
-                                                                logger.error('Error creating new Category: '+ err);
+                                                                logger.error('Error creating new Category: ' + err);
                                                                 res.status(400).send({
                                                                     message: "Bad Request"
                                                                 });
@@ -250,7 +251,7 @@ module.exports = app => {
                                                             sdc.timing('post.categorydb.timer', dbtimer1);
                                                         }
                                                     })
-                                                sdc.timing('get.categorydb.timer', dbtimer);  
+                                                sdc.timing('get.categorydb.timer', dbtimer);
                                                 res.status(204).send();
                                             })
 
@@ -263,15 +264,15 @@ module.exports = app => {
                                             }).then(data => {
                                                 res.status(204).send({ message: 'No Content' });
                                             }).catch(err => {
-                                                logger.error('Question cannot be updated: '+ err);
+                                                logger.error('Question cannot be updated: ' + err);
                                                 res.status(400).send({
                                                     message: "Bad Request"
                                                 });
                                             });
-                                            sdc.timing('put.questiondb.timer', dbtimer); 
+                                            sdc.timing('put.questiondb.timer', dbtimer);
 
                                         } else if (categories.length !== 0) {
-                                            
+
                                             categories.forEach(cat => {
                                                 let dbtimer2 = new Date();
                                                 Category.findOne({ where: { category: cat.category.toLowerCase() } })
@@ -286,20 +287,20 @@ module.exports = app => {
                                                             }).then(cat2 => {
                                                                 question.addCategory(cat2);
                                                             }).catch(err => {
-                                                                logger.error('Error creating new Category: '+ err);
+                                                                logger.error('Error creating new Category: ' + err);
                                                                 res.status(400).json({ message: 'Bad request' });
                                                             })
-                                                            sdc.timing('post.categorydb.timer', timer1); 
+                                                            sdc.timing('post.categorydb.timer', timer1);
                                                         }
                                                     }).catch(err => {
-                                                        logger.error('Cannot find Category: '+ cat.category);
+                                                        logger.error('Cannot find Category: ' + cat.category);
                                                     });
-                                                    sdc.timing('get.categorydb.timer', dbtimer2); 
+                                                sdc.timing('get.categorydb.timer', dbtimer2);
                                             })
                                             res.status(204).send({ message: 'No Content' });
                                         }
                                     } else {
-                                        logger.error('Unauthorized');
+                                        logger.warn('Unauthorized');
                                         return res.status(401).json({ msg: 'Unauthorized' });
                                     }
                                 } else {
@@ -307,12 +308,12 @@ module.exports = app => {
                                     return res.status(404).json({ message: 'Not Found' });
                                 }
                             }).catch(err => {
-                                logger.error('Question not found: '+err);
+                                logger.error('Question not found: ' + err);
                                 res.status(404).send({
                                     message: "Not Found"
                                 });
                             })
-                            sdc.timing('get.questiondb.timer', dbtimer);
+                        sdc.timing('get.questiondb.timer', dbtimer);
                     }
                 } else {
                     logger.error('Request type must be JSON');
@@ -322,7 +323,7 @@ module.exports = app => {
                 return res.status(400).json({ msg: 'Bad Request' });
             }
         } else {
-            logger.error('Unauthorized');
+            logger.warn('Unauthorized');
             return res.status(401).json({ msg: 'Unauthorized' });
         }
         sdc.timing('put.question.timer', timer);
@@ -355,9 +356,9 @@ module.exports = app => {
                                     message: "Bad Request"
                                 });
                             });
-                            sdc.timing('get.answer.timer', dbtimer1);
+                        sdc.timing('get.answer.timer', dbtimer1);
                     } else {
-                        logger.error('Unauthorized');
+                        logger.warn('Unauthorized');
                         return res.status(400).json({ msg: 'Bad Request' });
                     }
                 }).catch(err => {
@@ -366,9 +367,9 @@ module.exports = app => {
                         message: "Not Found"
                     });
                 });
-                sdc.timing('get.questiondb.timer', timer); 
+            sdc.timing('get.questiondb.timer', timer);
         } else {
-            logger.error('Unauthorized');
+            logger.warn('Unauthorized');
             res.status(401).json({ msg: 'Unauthorized' });
         }
         sdc.timing('delete.question.timer', timer);

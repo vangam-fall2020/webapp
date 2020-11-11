@@ -4,10 +4,10 @@ const multerS3 = require('multer-s3');
 const Config = require('../config/config');
 
 const log4js = require('log4js');
-	log4js.configure({
-	  appenders: { logs: { type: 'file', filename: '/home/ubuntu/webapp/logs/webapp.log' } },
-	  categories: { default: { appenders: ['logs'], level: 'info' } }
-    });
+log4js.configure({
+    appenders: { logs: { type: 'file', filename: '/home/ubuntu/webapp/logs/webapp.log' } },
+    categories: { default: { appenders: ['logs'], level: 'info' } }
+});
 const logger = log4js.getLogger('logs');
 
 //global common variables
@@ -54,7 +54,7 @@ let upload = multer({
                 objId = imageName + '_' + Date.now().toString();
                 cb(null, objId);
             } else {
-                logger.error('Upload Image of type - '+ imagetypes);
+                logger.error('Upload Image of type - ' + imagetypes);
                 cb("Image upload only supports the following imagetypes - " + imagetypes);
             }
         }
