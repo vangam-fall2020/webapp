@@ -2,6 +2,7 @@ const db = require("../models");
 const Question = db.question;
 const Category = db.category;
 const Answer = db.answer;
+const File = db.file;
 const questionCategories = db.questionCategories;
 const uuid = require('uuid');
 const moment = require('moment');
@@ -124,7 +125,7 @@ module.exports = app => {
             include: [{
                 model: Category,
                 through: { atributes: [] }
-            }, Answer]
+            }, Answer, File]
         })
             .then(data => {
                 res.status(200).send({
@@ -145,7 +146,7 @@ module.exports = app => {
     router.get("/question/:id", (req, res) => {
         sdc.increment('GET Question Triggered');
         let timer = new Date();
-        Question.findByPk(req.params.id, { include: Category })
+        Question.findByPk(req.params.id, { include: [Category,File] })
             .then(data => {
                 let dbtimer = new Date();
                 Answer.findAll({ where: { question_id: data.question_id } })

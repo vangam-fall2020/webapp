@@ -3,6 +3,7 @@ const Question = db.question;
 const User = db.users;
 const Category = db.category;
 const Answer = db.answer;
+const File = db.file;
 const uuid = require('uuid');
 const moment = require('moment');
 const saltRounds = 10;
@@ -73,7 +74,7 @@ module.exports = app => {
 
     router.get("/:qid/answer/:aid", (req, res) => {
 
-        Answer.findByPk(req.params.aid)
+        Answer.findByPk(req.params.aid, { include: File })
             .then(data => {
                 if (data.question_id == req.params.qid) {
                     res.statusCode = 200;
@@ -143,7 +144,7 @@ module.exports = app => {
                             .then(data => {
                                 res.status(204).send();
                             }).catch(err => {
-                                
+
                             });
                     } else {
                         return res.status(400).send({

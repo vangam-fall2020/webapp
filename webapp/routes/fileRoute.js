@@ -15,12 +15,12 @@ const { upload, deleteFromS3, getMetaDataFromS3 } = require('../services/image')
 const singleUpload = upload.single('image');
 
 const SDC = require('statsd-client'),
-sdc = new SDC({host: 'localhost' , port:8125});
+    sdc = new SDC({ host: 'localhost', port: 8125 });
 const log4js = require('log4js');
-	log4js.configure({
-	  appenders: { logs: { type: 'file', filename: '/home/ubuntu/webapp/logs/webapp.log' } },
-	  categories: { default: { appenders: ['logs'], level: 'info' } }
-    });
+log4js.configure({
+    appenders: { logs: { type: 'file', filename: '/home/ubuntu/webapp/logs/webapp.log' } },
+    categories: { default: { appenders: ['logs'], level: 'info' } }
+});
 const logger = log4js.getLogger('logs');
 // Api calls to protected routes
 module.exports = app => {
@@ -41,7 +41,7 @@ module.exports = app => {
                                     let s3timer = new Date();
                                     singleUpload(req, res, (err) => {
                                         if (err) {
-                                            logger.error('error uploading file to s3: '+ err);
+                                            logger.error('error uploading file to s3: ' + err);
                                             res.status(400).send({
                                                 message: "Bad Request"
                                             });
@@ -63,16 +63,21 @@ module.exports = app => {
                                                         question_id: question_id,
                                                         metadata: req.file
                                                     })
-                                                    .then(image => {
-                                                        logger.info('Image added to File database table');
+                                                        .then(image => {
+                                                            logger.info('Image added to File database table');
                                                             question.addFile(image);
                                                             return res.status(201).send({ image });
                                                         })
                                                         .catch(err => {
                                                             logger.error(err);
+                                                            deleteFromS3(req.file.key, function (res1) {
+                                                                if (res1 != null) {
+                                                                    logger.info('Image deleted from s3');
+                                                                }
+                                                            });
                                                             return res.status(400).json({ msg: 'Bad Request' });
                                                         })
-                                                    sdc.timing('post.filedb.timer', filetimer);    
+                                                    sdc.timing('post.filedb.timer', filetimer);
                                                 }
                                             });
                                             sdc.timing('s3.get.timer', s3gettimer);
@@ -84,14 +89,14 @@ module.exports = app => {
                                     logger.error(err);
                                     console.log("error: ", err);
                                 })
-                                sdc.timing('get.filedb.timer', dbtimer1);
+                            sdc.timing('get.filedb.timer', dbtimer1);
 
                         } else {
                             logger.error('Unauthorized');
                             res.status(401).json({ msg: 'Unauthorized' });
                         }
                     })
-                    sdc.timing('get.questiondb.timer', dbtimer);
+                sdc.timing('get.questiondb.timer', dbtimer);
             }
             else {
                 return res.status(400).json({ msg: 'Bad Request' });
@@ -145,7 +150,7 @@ module.exports = app => {
                                 }
 
                             })
-                            sdc.timing('get.filedb.timer', filetimer);
+                        sdc.timing('get.filedb.timer', filetimer);
 
                     } else {
                         logger.error('Unauthorized');
@@ -155,7 +160,7 @@ module.exports = app => {
                     logger.error(err);
                     return res.status(400).json({ msg: 'Bad Request' })
                 })
-                sdc.timing('get.questiondb.timer', quetimer);
+            sdc.timing('get.questiondb.timer', quetimer);
 
         } else {
             logger.error('Unauthorized');
@@ -206,16 +211,16 @@ module.exports = app => {
                                 logger.error(err);
                                 return res.status(400).json({ msg: 'Bad Request' })
                             })
-                            sdc.timing('get.filedb.timer', filetimer);
+                        sdc.timing('get.filedb.timer', filetimer);
                     } else {
                         logger.error('Unauthorized');
                         return res.status(401).json({ msg: 'Unauthorized' })
                     }
                 }).catch(err => {
-                    logger.error('Answer ID not found: '+ err);
+                    logger.error('Answer ID not found: ' + err);
                     return res.status(400).json({ msg: 'Bad Request' })
                 })
-                sdc.timing('get.answerdb.timer', answertimer);
+            sdc.timing('get.answerdb.timer', answertimer);
 
         } else {
             logger.error('Unauthorized');
@@ -239,7 +244,7 @@ module.exports = app => {
                                 let s3timer = new Date();
                                 singleUpload(req, res, (err) => {
                                     if (err) {
-                                        logger.error('Error uploading file to S3: '+ err);
+                                        logger.error('Error uploading file to S3: ' + err);
                                         res.status(400).send({
                                             message: "Bad Request"
                                         });
@@ -252,49 +257,31 @@ module.exports = app => {
                                         getMetaDataFromS3(function (metadata) {
                                             if (metadata != null) {
 
-                                                // File.findOne({ where: { question_id: req.params.qid } })
-                                                //     .then(file => {
-                                                //         if (file) {
-                                                //             if (file.answer_id == answer.answer_id) {
-                                                //                 return res.status(400).json({ msg: 'Delete image before updating new file' });
-                                                //             } else {
-                                                //                 file.update({
-                                                //                     metadata: req.file,
-                                                //                     answer_id: answer.answer_id
-                                                //                 })
-                                                //                     .then(image => {
-
-                                                //                         return res.status(201).send({ image });
-                                                //                     })
-                                                //                     .catch(err => {
-
-                                                //                         return res.status(400).json({ msg: 'Bad Request' });
-                                                //                     })
-                                                //             }
-                                                //         } else {
-                                                    let filetimer = new Date();
-                                                            File.create({
-                                                                file_id: uuid.v4(),
-                                                                file_name: req.file.originalname,
-                                                                s3_object_name: req.file.key,
-                                                                created_date: moment().format(),
-                                                                question_id: req.params.qid,
-                                                                metadata: req.file,
-                                                                answer_id: answer.answer_id
-                                                            })
-                                                                .then(image => {
-                                                                    logger.info('Image uploaded to S3 and added to File database table');
-                                                                    answer.addFile(image);
-                                                                    return res.status(201).send({ image });
-                                                                })
-                                                                .catch(err => {
-                                                                    logger.error(err);
-                                                                    return res.status(400).json({ msg: 'Bad Request' });
-                                                                })
-                                                                sdc.timing('post.file.timer', filetimer);
-                                                    //     }
-                                                    // })
-
+                                                let filetimer = new Date();
+                                                File.create({
+                                                    file_id: uuid.v4(),
+                                                    file_name: req.file.originalname,
+                                                    s3_object_name: req.file.key,
+                                                    created_date: moment().format(),
+                                                    question_id: req.params.qid,
+                                                    metadata: req.file,
+                                                    answer_id: answer.answer_id
+                                                })
+                                                    .then(image => {
+                                                        logger.info('Image uploaded to S3 and added to File database table');
+                                                        answer.addFile(image);
+                                                        return res.status(201).send({ image });
+                                                    })
+                                                    .catch(err => {
+                                                        logger.error(err);
+                                                        deleteFromS3(req.file.key, function (res1) {
+                                                            if (res1 != null) {
+                                                                logger.info('Image deleted from s3');
+                                                            }
+                                                        });
+                                                        return res.status(400).json({ msg: 'Bad Request' });
+                                                    })
+                                                sdc.timing('post.file.timer', filetimer);
 
                                             }
                                         });
@@ -310,7 +297,7 @@ module.exports = app => {
                             res.status(401).json({ msg: 'Unauthorized' });
                         }
                     })
-                    sdc.timing('get.answer.timer', answertimer);
+                sdc.timing('get.answer.timer', answertimer);
             }
             else {
                 return res.status(400).json({ msg: 'Bad Request' });
