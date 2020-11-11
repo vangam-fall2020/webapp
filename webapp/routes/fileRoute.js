@@ -27,6 +27,7 @@ module.exports = app => {
 
     // Attach file to question
     router.post("/:qid/file", userAuth.basicAuth, (req, res) => {
+        sdc.increment('POST File Triggered');
         let timer = new Date();
         if (res.locals.user) {
             let question_id = req.params.qid;
@@ -92,7 +93,7 @@ module.exports = app => {
                             sdc.timing('get.filedb.timer', dbtimer1);
 
                         } else {
-                            logger.error('Unauthorized');
+                            logger.warn('Unauthorized');
                             res.status(401).json({ msg: 'Unauthorized' });
                         }
                     })
@@ -103,7 +104,7 @@ module.exports = app => {
             }
 
         } else {
-            logger.error('Unauthorized');
+            logger.warn('Unauthorized');
             res.status(401).json({ msg: 'Unauthorized' });
         }
         sdc.timing('post.file.timer', timer);
@@ -111,6 +112,7 @@ module.exports = app => {
 
     // Delete file
     router.delete("/:qid/file/:fid", userAuth.basicAuth, (req, res) => {
+        sdc.increment('DELETE File Triggered');
         let timer = new Date();
         if (res.locals.user) {
             let quetimer = new Date();
@@ -153,7 +155,7 @@ module.exports = app => {
                         sdc.timing('get.filedb.timer', filetimer);
 
                     } else {
-                        logger.error('Unauthorized');
+                        logger.warn('Unauthorized');
                         return res.status(401).json({ msg: 'Unauthorized' })
                     }
                 }).catch(err => {
@@ -163,7 +165,7 @@ module.exports = app => {
             sdc.timing('get.questiondb.timer', quetimer);
 
         } else {
-            logger.error('Unauthorized');
+            logger.warn('Unauthorized');
             res.status(401).json({ msg: 'Unauthorized' });
         }
         sdc.timing('delete.file.timer', timer);
@@ -171,6 +173,7 @@ module.exports = app => {
 
     //Delete file attached to answer
     router.delete("/:qid/answer/:aid/file/:fid", userAuth.basicAuth, (req, res) => {
+        sdc.increment('DELETE File Triggered');
         let timer = new Date();
         if (res.locals.user) {
             let answertimer = new Date();
@@ -213,7 +216,7 @@ module.exports = app => {
                             })
                         sdc.timing('get.filedb.timer', filetimer);
                     } else {
-                        logger.error('Unauthorized');
+                        logger.warn('Unauthorized');
                         return res.status(401).json({ msg: 'Unauthorized' })
                     }
                 }).catch(err => {
@@ -223,7 +226,7 @@ module.exports = app => {
             sdc.timing('get.answerdb.timer', answertimer);
 
         } else {
-            logger.error('Unauthorized');
+            logger.warn('Unauthorized');
             res.status(401).json({ msg: 'Unauthorized' });
         }
         sdc.timing('delete.filedb.timer', timer);
@@ -231,6 +234,7 @@ module.exports = app => {
 
     // Post a file to answer
     router.post("/:qid/answer/:aid/file", userAuth.basicAuth, (req, res) => {
+        sdc.increment('POST File Triggered');
         let timer = new Date();
         if (res.locals.user) {
             let answer_id = req.params.aid;
@@ -293,7 +297,7 @@ module.exports = app => {
                                 return res.status(400).json({ msg: 'Bad Request' });
                             }
                         } else {
-                            logger.error('Unauthorized');
+                            logger.warn('Unauthorized');
                             res.status(401).json({ msg: 'Unauthorized' });
                         }
                     })
@@ -304,7 +308,7 @@ module.exports = app => {
             }
 
         } else {
-            logger.error('Unauthorized');
+            logger.warn('Unauthorized');
             res.status(401).json({ msg: 'Unauthorized' });
         }
         sdc.timing('post.file.timer', timer);

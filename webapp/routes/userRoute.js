@@ -9,12 +9,12 @@ let userAuth = require('../services/authentication');
 const router = require("express").Router();
 
 const SDC = require('statsd-client'),
-sdc = new SDC({host: 'localhost' , port:8125});
+    sdc = new SDC({ host: 'localhost', port: 8125 });
 const log4js = require('log4js');
-	log4js.configure({
-	  appenders: { logs: { type: 'file', filename: '/home/ubuntu/webapp/logs/webapp.log' } },
-	  categories: { default: { appenders: ['logs'], level: 'info' } }
-    });
+log4js.configure({
+    appenders: { logs: { type: 'file', filename: '/home/ubuntu/webapp/logs/webapp.log' } },
+    categories: { default: { appenders: ['logs'], level: 'info' } }
+});
 const logger = log4js.getLogger('logs');
 
 
@@ -71,7 +71,7 @@ module.exports = app => {
             }
             else if (firstName == null || lastName == null || password == null || emailAddress == null
                 || firstName == "" || lastName == "" || password == "" || emailAddress == "") {
-                    logger.error('some of the input fields are missing');
+                logger.error('some of the input fields are missing');
                 res.status(400).json({ msg: 'Please enter all details!' });
             }
             else if (emailValidator.validate(emailAddress) == false) {
@@ -101,8 +101,8 @@ module.exports = app => {
             res.setHeader('Content-Type', 'application/json');
             res.json(res.locals.user);
 
-        }else {
-            logger.error('Unauthorized User');
+        } else {
+            logger.warn('Unauthorized User');
             res.status(401).json({ msg: 'Unauthorized' });
         }
         sdc.timing('get.user.timer', timer);
@@ -113,8 +113,8 @@ module.exports = app => {
         sdc.increment('GET User Triggered');
         let timer = new Date();
 
-       let dbtimer = new Date();
-   
+        let dbtimer = new Date();
+
         // Save User in the database
         User.findByPk(req.params.id)
             .then(data => {
@@ -133,8 +133,8 @@ module.exports = app => {
                     message: "Not Found"
                 });
             });
-            sdc.timing('get.userdb.timer', dbtimer);
-            sdc.timing('get.user.timer', timer);
+        sdc.timing('get.userdb.timer', dbtimer);
+        sdc.timing('get.user.timer', timer);
 
     });
 
@@ -159,7 +159,7 @@ module.exports = app => {
                     }
                     if (first_name == null || last_name == null || username == null || password == null ||
                         first_name == "" || last_name == "" || username == "" || password == "") {
-                            logger.error('Input values should not be null');
+                        logger.error('Input values should not be null');
                         return res.status(400).json({ msg: 'Bad Request' });
                     } else {
                         let dbtimer = new Date();
@@ -200,7 +200,7 @@ module.exports = app => {
                 res.status(400).json({ msg: 'Bad Request' });
             }
         } else {
-            logger.error('Unauthorized');
+            logger.warn('Unauthorized');
             res.status(401).json({ msg: 'Unauthorized' });
         }
         sdc.timing('put.user.timer', timer);
