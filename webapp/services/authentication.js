@@ -19,7 +19,7 @@ function basicAuth(req, res, next) {
     authHeader = req.headers.authorization;
 
     if (!authHeader) {
-        logger.error('Unauthorized');
+        logger.warn('Unauthorized');
         return res.status(401).json({ message: 'Unauthorized' });
     }
 
@@ -40,13 +40,13 @@ function basicAuth(req, res, next) {
                     logger.info("User Authoried");
                     return res.locals.user;
                 } else {
-                    logger.error('Unauthorized');
+                    logger.warn('Unauthorized');
                     return res.status(401).json({ message: 'Unauthorized' });
                 }
             });
 
         } else {
-            logger.error('Unauthorized');
+            logger.warn('Unauthorized');
             return res.status(401).json({ message: 'Unauthorized' });
         }
     })
