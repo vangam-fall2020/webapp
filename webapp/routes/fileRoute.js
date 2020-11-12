@@ -193,7 +193,7 @@ module.exports = app => {
                                                 logger.info('Image deleted from s3');
                                                 File.destroy({ where: { file_id: req.params.fid } })
                                                     .then(file => {
-                                                        logger.info('Image deleted');
+                                                        logger.info('Image deleted from File Database');
                                                         return res.status(201).json({ msg: "No Content" });
                                                     }).catch(err => {
                                                         logger.error(err);
