@@ -1,7 +1,6 @@
 # CSYE 6225 - Fall 2020
 
 ### Technologies
-
 1. Nodejs
 2. Express.js
 3. MySQL
