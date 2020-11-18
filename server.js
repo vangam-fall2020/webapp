@@ -1,8 +1,13 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-
 const app = express();
+const log4js = require('log4js');
+	log4js.configure({
+	  appenders: { logs: { type: 'file', filename: '/home/ubuntu/webapp/logs/webapp.log' } },
+	  categories: { default: { appenders: ['logs'], level: 'info' } }
+    });
+const logger = log4js.getLogger('logs');
 
 var corsOptions = {
   origin: "http://localhost:8081"
@@ -19,7 +24,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // simple route
 app.get("/", (req, res) => {
-  res.json({ message: "Welcome to Nodejs application." });
+  res.json({ message: "Welcome to Nodejs(Webapp) application." });
 });
 
 require("./webapp/routes/userRoute.js")(app);
@@ -30,6 +35,8 @@ require("./webapp/routes/fileRoute.js")(app);
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
+  logger.trace("Application started")
+  logger.info(`Server is running on port ${PORT}.`);
   console.log(`Server is running on port ${PORT}.`);
 });
 
