@@ -44,7 +44,7 @@ module.exports = app => {
                                         if (err) {
                                             logger.error('error uploading file to s3: ' + err);
                                             res.status(400).send({
-                                                message: "Bad Request"
+                                                message: "Error uploading file to S3"
                                             });
                                         } else {
                                             logger.info('Image uploaded to S3 successfully');
@@ -64,7 +64,7 @@ module.exports = app => {
                                                         question_id: question_id,
                                                         metadata: req.file
                                                     })
-                                                        .then(image => {
+                                                    .then(image => {
                                                             logger.info('Image added to File database table');
                                                             question.addFile(image);
                                                             return res.status(201).send({ image });
@@ -79,6 +79,8 @@ module.exports = app => {
                                                             return res.status(400).json({ msg: 'Bad Request' });
                                                         })
                                                     sdc.timing('post.filedb.timer', filetimer);
+                                                }else{
+                                                    logger.warn('Metadata not found');
                                                 }
                                             });
                                             sdc.timing('s3.get.timer', s3gettimer);
@@ -88,7 +90,9 @@ module.exports = app => {
                                 })
                                 .catch(err => {
                                     logger.error(err);
-                                    console.log("error: ", err);
+                                    res.status(400).send({
+                                        message: "Bad Request"
+                                    });
                                 })
                             sdc.timing('get.filedb.timer', dbtimer1);
 
@@ -139,6 +143,8 @@ module.exports = app => {
                                                         return res.status(400).json({ msg: err });
                                                     })
                                                 sdc.timing('delete.filedb.timer', filetimer1);
+                                            }else{
+                                                logger.warn('Cannot delete file');
                                             }
                                         });
                                         sdc.timing('s3.delete.timer', s3timer);
@@ -151,6 +157,12 @@ module.exports = app => {
                                     return res.status(404).json({ msg: 'Image Not Found!' });
                                 }
 
+                            })
+                            .catch(err=>{
+                                logger.error(err);
+                                res.status(400).send({
+                                    message: "Bad Request"
+                                });
                             })
                         sdc.timing('get.filedb.timer', filetimer);
 
@@ -300,6 +312,12 @@ module.exports = app => {
                             logger.warn('Unauthorized');
                             res.status(401).json({ msg: 'Unauthorized' });
                         }
+                    })
+                    .catch(err=>{
+                        logger.error(err);
+                        res.status(400).send({
+                            message: "Bad Request"
+                        });
                     })
                 sdc.timing('get.answer.timer', answertimer);
             }

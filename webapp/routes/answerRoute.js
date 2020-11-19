@@ -11,8 +11,7 @@ let userAuth = require('../services/authentication');
 const { use } = require("../../server");
 const { category, answer } = require("../models");
 const router = require("express").Router();
-const { upload, deleteFromS3, getMetaDataFromS3 } = require('../services/image');
-const singleUpload = upload.single('image');
+const { deleteFromS3 } = require('../services/image');
 
 const SDC = require('statsd-client'),
     sdc = new SDC({ host: 'localhost', port: 8125 });
@@ -158,6 +157,11 @@ module.exports = app => {
                                         message: "Bad Request"
                                     });
                                 }
+                            }).catch(err=>{
+                                logger.error(err);
+                                res.status(400).send({
+                                    message: "Bad Request"
+                                });
                             });
                         sdc.timing('get.answerdb.timer', answertimer);
                     }
@@ -184,15 +188,34 @@ module.exports = app => {
                 .then(answer => {
                     if (res.locals.user.id == answer.user_id) {
                         let answertimer = new Date();
-                        answer.destroy({ where: { answer_id: req.params.aid } })
+                        File.findOne({ where: { answer_id: req.params.aid } })
+                        .then(file=>{
+                            deleteFromS3(file.s3_object_name, function (res1) {
+                                if (res1 != null) {
+                                    logger.info('Image deleted from s3');
+                                }else{
+                                    logger.warn('cannot delete object from s3');
+                                }
+                            });
+                            answer.destroy({ where: { answer_id: file.answer_id } })
                             .then(data => {
                                 logger.info('Answer Deleted successfully. Deleted Answer: '+ data);
-                                
                                 res.status(204).send();
                             }).catch(err => {
                                 logger.error(err);
+                                res.status(400).send({
+                                    message: "Bad Request"
+                                });
                             });
-                        sdc.timing('delete.answerdb.timer', answertimer);
+                            sdc.timing('delete.answerdb.timer', answertimer);
+                        })
+                        .catch(err=>{
+                            logger.error(err);
+                            res.status(400).send({
+                                message: "Bad Request"
+                            });
+                        });      
+                        
                     } else {
                         logger.error('User is not authorized to perform this operation');
                         return res.status(400).send({

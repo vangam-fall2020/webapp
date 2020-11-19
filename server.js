@@ -40,11 +40,11 @@ app.listen(PORT, () => {
   logger.trace("Application started");
  
   var metadata = new aws.MetadataService();
-  meta.request("/latest/meta-data/instance-id", function(err, data){
+  metadata.request("/latest/meta-data/instance-id", function(err, data){
     if (err) {
       logger.fatal(err);
     } else {
-      logger.info("Application started at "+ JSON.parse(data).instance-id);
+      logger.info("Application started at "+ data);
     }
   });
   logger.info(`Server is running on port ${PORT}.`);
