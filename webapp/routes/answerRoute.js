@@ -11,6 +11,8 @@ let userAuth = require('../services/authentication');
 const { use } = require("../../server");
 const { category, answer } = require("../models");
 const router = require("express").Router();
+const { upload, deleteFromS3, getMetaDataFromS3 } = require('../services/image');
+const singleUpload = upload.single('image');
 
 const SDC = require('statsd-client'),
     sdc = new SDC({ host: 'localhost', port: 8125 });
@@ -184,7 +186,8 @@ module.exports = app => {
                         let answertimer = new Date();
                         answer.destroy({ where: { answer_id: req.params.aid } })
                             .then(data => {
-                                logger.info('Answer Deleted successfully. Deleted Answer: '+ request.params.aid);
+                                logger.info('Answer Deleted successfully. Deleted Answer: '+ data);
+                                
                                 res.status(204).send();
                             }).catch(err => {
                                 logger.error(err);
