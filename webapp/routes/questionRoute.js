@@ -19,6 +19,7 @@ log4js.configure({
     categories: { default: { appenders: ['logs'], level: 'info' } }
 });
 const logger = log4js.getLogger('logs');
+const { deleteFromS3 } = require('../services/image');
 
 // Api calls to protected routes
 module.exports = app => {
@@ -76,7 +77,12 @@ module.exports = app => {
                                                 }).then(data => {
                                                     logger.info('New category added successfully');
                                                     question.addCategory(data);
-                                                })
+                                                }).catch(err=>{
+                                                    logger.error(err);
+                                                    res.status(400).send({
+                                                        message: "Please enter valid Category"
+                                                    });
+                                                });
                                                 sdc.timing('post.categorydb.timer', dbtimerCategory1);
                                             }
 
@@ -157,6 +163,11 @@ module.exports = app => {
                         res.status(200).send({
                             data
                         });
+                    }).catch(err=>{
+                        logger.error(err);
+                        res.status(400).send({
+                            message: "Bad Request"
+                        });
                     })
                 sdc.timing('get.answer.timer', timer);
                 sdc.timing('get.answerdb.timer', timer);
@@ -201,7 +212,13 @@ module.exports = app => {
                                 if (question) {
                                     if (res.locals.user.id == question.user_id) {
                                         questionCategories.destroy({ where: { question_id: question.question_id } })
-                                            .then(data => { }).catch(err => { })
+                                            .then(data => {
+                                                logger.info('Category updated');
+                                             }).catch(err => { 
+                                                res.status(400).send({
+                                                    message: "Cannot update category"
+                                                });
+                                            })
                                         if (question_text && categories) {
                                             categories.forEach(cat => {
                                                 let dbtimer = new Date();
@@ -217,7 +234,7 @@ module.exports = app => {
                                                             }).catch(err => {
                                                                 logger.error('Question not updated: ' + err);
                                                                 res.status(400).send({
-                                                                    message: "Bad Request"
+                                                                    message: "Question not updated"
                                                                 });
                                                             });
                                                             sdc.timing('put.questiondb.timer', dbtimer1);
@@ -250,6 +267,12 @@ module.exports = app => {
                                                             })
                                                             sdc.timing('post.categorydb.timer', dbtimer1);
                                                         }
+                                                    })
+                                                    .catch(err=>{
+                                                        logger.error(err);
+                                                        res.status(400).send({
+                                                            message: "Bad Request"
+                                                        });
                                                     })
                                                 sdc.timing('get.categorydb.timer', dbtimer);
                                                 res.status(204).send();
@@ -293,7 +316,10 @@ module.exports = app => {
                                                             sdc.timing('post.categorydb.timer', timer1);
                                                         }
                                                     }).catch(err => {
-                                                        logger.error('Cannot find Category: ' + cat.category);
+                                                        logger.error('Cannot find Category: ' + err);
+                                                        res.status(400).send({
+                                                            message: "Cannot find category"
+                                                        });
                                                     });
                                                 sdc.timing('get.categorydb.timer', dbtimer2);
                                             })
@@ -332,6 +358,7 @@ module.exports = app => {
     router.delete("/question/:qid", userAuth.basicAuth, (req, res) => {
         sdc.increment('DELETE Question Triggered');
         let timer = new Date();
+        var question_id = req.params.qid;
         if (res.locals.user) {
             Question.findByPk(req.params.qid)
                 .then(question => {
@@ -343,12 +370,35 @@ module.exports = app => {
                                     return res.status(400).json({ msg: 'Bad Request' });
                                 } else {
                                     let dbtimer2 = new Date();
-                                    question.destroy({ where: { question_id: req.params.qid } })
-                                        .then(data => {
-                                            res.status(204).send();
-                                        }).catch(err => {
+                                    File.findOne({ where: { question_id: question.question_id } })
+                                        .then(file => {
+                                            deleteFromS3(file.s3_object_name, function (res1) {
+                                                if (res1 != null) {
+                                                    logger.info('Image deleted from s3');
+                                                }else{
+                                                    logger.warn('Cannot delete object '+file.s3_object_name +' from S3');
+                                                }
+                                            });
+
+                                            question.destroy({ where: { question_id: question.question_id } })
+                                                .then(data => {
+                                                    logger.info('Question Deleted successfully. Deleted Question: ' + data);
+                                                    res.status(204).send();
+                                                }).catch(err => {
+                                                    logger.error(err);
+                                                    res.status(400).send({
+                                                        message: "Bad Request"
+                                                    });
+                                                    console.log(err);
+                                                });
+                                            sdc.timing('delete.questiondb.timer', dbtimer2);
+                                        })
+                                        .catch(err => {
+                                            logger.error(err);
+                                            res.status(400).send({
+                                                message: "Bad Request"
+                                            });
                                         });
-                                    sdc.timing('delete.questiondb.timer', dbtimer2);
                                 }
                             }).catch(err => {
                                 logger.error(err);

@@ -112,7 +112,6 @@ module.exports = app => {
     router.get("/:id", (req, res, next) => {
         sdc.increment('GET User Triggered');
         let timer = new Date();
-
         let dbtimer = new Date();
 
         // Save User in the database
