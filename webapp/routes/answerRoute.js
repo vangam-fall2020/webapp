@@ -13,6 +13,9 @@ const { category, answer } = require("../models");
 const router = require("express").Router();
 const { deleteFromS3 } = require('../services/image');
 
+const AWS = require('aws-sdk');
+AWS.config.update({ region: 'us-east-1' });
+
 const SDC = require('statsd-client'),
     sdc = new SDC({ host: 'localhost', port: 8125 });
 const log4js = require('log4js');
@@ -28,6 +31,16 @@ module.exports = app => {
     router.post("/:id/answer", userAuth.basicAuth, (req, res) => {
         sdc.increment('POST Answer Triggered');
         let timer = new Date();
+
+        let topicARN;
+        var sns = new AWS.SNS();
+        var listTopicsPromise = sns.listTopics({}).promise();
+        let header = req.headers['authorization'] || '',
+            token = header.split(/\s+/).pop() || '',
+            authFromToken = new Buffer.from(token, 'base64').toString(),
+            user_data = authFromToken.split(/:/),
+            email_address = user_data[0];
+
         if (res.locals.user) {
             if (Object.keys(req.body).length > 0) {
                 let contentType = req.headers['content-type'];
@@ -52,8 +65,42 @@ module.exports = app => {
                                         user_id: user_id,
                                         answer_text: answer_text
                                     }).then(answer => {
-                                        logger.info('Answer added to Question successfully, answer_id: '+ answer.answer_id);
+                                        logger.info('Answer added to Question successfully, answer_id: ' + answer.answer_id);
                                         question.addAnswer(answer);
+
+                                        listTopicsPromise.then(
+                                            function (data) {
+                                                topicARN = data.Topics[0].TopicArn;
+
+                                                let params = {
+                                                    TopicArn: topicARN,
+                                                    MessageStructure: 'json',
+                                                    Message: JSON.stringify({
+                                                        "answer": JSON.stringify(answer),
+                                                        "email": JSON.stringify(email_address),
+                                                        "question_id": answer.question_id,
+                                                        "answer_id": answer.answer_id,
+                                                        "message": "Posted new Answer to question '"+question.question_text+"'" 
+                                                    })
+                                                };
+                                                logger.info('params --- ' + params);
+                                                sns.publish(params, (err, data) => {
+                                                    if (err) {
+                                                        logger.error('error in SNS publish', err);
+                                                        // res.status(400).json({ msg: 'error in SNS publish' });
+                                                    } else {
+                                                        logger.info('Request recieved!')
+                                                        console.log('SNS publish success', data);
+                                                        // return res.status(200).json({ msg: 'Request recieved!' });
+                                                    }
+                                                })
+
+                                                console.log(data.Topics);
+                                            }).catch(
+                                                function (err) {
+                                                    console.error(err, err.stack);
+                                                });
+
                                         res.status(201).send({
                                             answer_id: answer.answer_id,
                                             question_id: question.question_id,
@@ -75,7 +122,7 @@ module.exports = app => {
                                     return res.status(400).json({ message: 'Bad Request' });
                                 }
                             }).catch(err => {
-                                logger.error('Invalid Question Id: '+ err);
+                                logger.error('Invalid Question Id: ' + err);
                                 res.status(400).send({
                                     message: "Bad Request"
                                 });
@@ -107,7 +154,7 @@ module.exports = app => {
                     res.setHeader('Content-Type', 'application/json');
                     res.json(data);
                 } else {
-                    logger.error('Invalid Question Id - '+ req.params.qid);
+                    logger.error('Invalid Question Id - ' + req.params.qid);
                     res.status(404).send({
                         message: "Not Found"
                     });
@@ -115,7 +162,7 @@ module.exports = app => {
 
             })
             .catch(err => {
-                logger.error('Invalid Question Id - '+ err);
+                logger.error('Invalid Question Id - ' + err);
                 res.status(404).send({
                     message: "Not Found"
                 });
@@ -131,10 +178,10 @@ module.exports = app => {
                 let contentType = req.headers['content-type'];
                 if (contentType == 'application/json') {
                     let answer_text = req.body.answer_text;
-                    if((answer_text == null || answer_text == "")) {
+                    if ((answer_text == null || answer_text == "")) {
                         logger.error('Input data should not be null or empty');
                         return res.status(400).json({ msg: 'Bad Request' });
-                    }else {
+                    } else {
                         let answertimer = new Date();
                         Answer.findByPk(req.params.aid)
                             .then(answer => {
@@ -143,7 +190,7 @@ module.exports = app => {
                                         updated_timestamp: moment().format(),
                                         answer_text: answer_text
                                     }).then(data => {
-                                        logger.info('Answer updated successfully: '+ answer.answer_id);
+                                        logger.info('Answer updated successfully: ' + answer.answer_id);
                                         res.status(204).send({});
                                     }).catch(err => {
                                         logger.error(err);
@@ -157,7 +204,7 @@ module.exports = app => {
                                         message: "Bad Request"
                                     });
                                 }
-                            }).catch(err=>{
+                            }).catch(err => {
                                 logger.error(err);
                                 res.status(400).send({
                                     message: "Bad Request"
@@ -189,33 +236,33 @@ module.exports = app => {
                     if (res.locals.user.id == answer.user_id) {
                         let answertimer = new Date();
                         File.findOne({ where: { answer_id: req.params.aid } })
-                        .then(file=>{
-                            deleteFromS3(file.s3_object_name, function (res1) {
-                                if (res1 != null) {
-                                    logger.info('Image deleted from s3');
-                                }else{
-                                    logger.warn('cannot delete object from s3');
-                                }
-                            });
-                            answer.destroy({ where: { answer_id: file.answer_id } })
-                            .then(data => {
-                                logger.info('Answer Deleted successfully. Deleted Answer: '+ data);
-                                res.status(204).send();
-                            }).catch(err => {
+                            .then(file => {
+                                deleteFromS3(file.s3_object_name, function (res1) {
+                                    if (res1 != null) {
+                                        logger.info('Image deleted from s3');
+                                    } else {
+                                        logger.warn('cannot delete object from s3');
+                                    }
+                                });
+                                answer.destroy({ where: { answer_id: file.answer_id } })
+                                    .then(data => {
+                                        logger.info('Answer Deleted successfully. Deleted Answer: ' + data);
+                                        res.status(204).send();
+                                    }).catch(err => {
+                                        logger.error(err);
+                                        res.status(400).send({
+                                            message: "Bad Request"
+                                        });
+                                    });
+                                sdc.timing('delete.answerdb.timer', answertimer);
+                            })
+                            .catch(err => {
                                 logger.error(err);
                                 res.status(400).send({
                                     message: "Bad Request"
                                 });
                             });
-                            sdc.timing('delete.answerdb.timer', answertimer);
-                        })
-                        .catch(err=>{
-                            logger.error(err);
-                            res.status(400).send({
-                                message: "Bad Request"
-                            });
-                        });      
-                        
+
                     } else {
                         logger.error('User is not authorized to perform this operation');
                         return res.status(400).send({
