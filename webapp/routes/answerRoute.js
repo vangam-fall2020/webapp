@@ -35,7 +35,6 @@ module.exports = app => {
         let topicARN;
         let topic = {};
         var sns = new AWS.SNS();
-        //var listTopicsPromise = sns.listTopics({}).promise();
         let header = req.headers['authorization'] || '',
             token = header.split(/\s+/).pop() || '',
             authFromToken = new Buffer.from(token, 'base64').toString(),
@@ -76,7 +75,7 @@ module.exports = app => {
                                             if (err) {
                                                 logger.error('err in sns listTopics', err);
                                                 console.log("err: ", err);
-                                                //res.status(400).json({ msg: 'err in sns listTopics' });
+                                               
                                             }
                                             else {
                                                 logger.info("email: ", email_address);
@@ -84,7 +83,7 @@ module.exports = app => {
                                                 topicARN = data.Topics[0].TopicArn;
                                                 let messageJson = {
                                                     "answer": JSON.stringify(answer),
-                                                    "email": JSON.stringify(email_address),
+                                                    "email": (email_address),
                                                     "question_id": answer.question_id,
                                                     "answer_id": answer.answer_id,
                                                     "message": "Posted new Answer to question '" + question.question_text + "'"
@@ -100,11 +99,11 @@ module.exports = app => {
                                                 sns.publish(params, (err, data) => {
                                                     if (err) {
                                                         logger.error('error in SNS publish', err);
-                                                        // res.status(400).json({ msg: 'error in SNS publish' });
+                                                       
                                                     } else {
-                                                        logger.info('Request recieved!')
+                                                        logger.info('SNS publish success', data)
                                                         console.log('SNS publish success', data);
-                                                        // return res.status(200).json({ msg: 'Request recieved!' });
+                                                        
                                                     }
                                                 })
                                                 console.log(data.Topics);
@@ -126,7 +125,7 @@ module.exports = app => {
                                             message: "Bad Request"
                                         });
                                     })
-                                    sdc.timing('post.answerdb.timer', timer);
+                                    sdc.timing('post.answerdb.timer', answertimer);
                                 } else {
                                     logger.error('Invalid Question Id in URL');
                                     return res.status(400).json({ message: 'Bad Request' });
@@ -183,6 +182,16 @@ module.exports = app => {
     router.put("/:qid/answer/:aid", userAuth.basicAuth, (req, res) => {
         sdc.increment('PUT Answer Triggered');
         let timer = new Date();
+
+        let topicARN;
+        let topic = {};
+        var sns = new AWS.SNS();
+        let header = req.headers['authorization'] || '',
+            token = header.split(/\s+/).pop() || '',
+            authFromToken = new Buffer.from(token, 'base64').toString(),
+            user_data = authFromToken.split(/:/),
+            email_address = user_data[0];
+
         if (res.locals.user) {
             if (Object.keys(req.body).length > 0) {
                 let contentType = req.headers['content-type'];
@@ -199,8 +208,48 @@ module.exports = app => {
                                     answer.update({
                                         updated_timestamp: moment().format(),
                                         answer_text: answer_text
-                                    }).then(data => {
+                                    }).then(data1 => {
                                         logger.info('Answer updated successfully: ' + answer.answer_id);
+                                        
+                                        sns.listTopics(topic, (err, data) => {
+                                            if (err) {
+                                                logger.error('err in sns listTopics', err);
+                                                console.log("err: ", err);
+                                                
+                                            }
+                                            else {
+                                                logger.info("email: ", email_address);
+
+                                                topicARN = data.Topics[0].TopicArn;
+                                                let messageJson = {
+                                                    "answer": JSON.stringify(answer),
+                                                    "email": (email_address),
+                                                    "question_id": answer.question_id,
+                                                    "answer_id": answer.answer_id,
+                                                    "message": "Posted new Answer to question '" + answer.question_id + "'"
+                                                }
+                                               
+                                                let params = {
+                                                    TopicArn: topicARN,
+                                                    MessageStructure: 'json',
+                                                    Message: JSON.stringify({ "default": JSON.stringify(messageJson) })
+
+                                                };
+                                                logger.info('params --- ' + params);
+                                                sns.publish(params, (err, data) => {
+                                                    if (err) {
+                                                        logger.error('error in SNS publish', err);
+                                                        
+                                                    } else {
+                                                        logger.info('SNS publish success', data)
+                                                        console.log('SNS publish success', data);
+                                                        
+                                                    }
+                                                })
+                                                console.log(data.Topics);
+                                            }
+                                        })
+
                                         res.status(204).send({});
                                     }).catch(err => {
                                         logger.error(err);
@@ -240,6 +289,17 @@ module.exports = app => {
     router.delete("/:qid/answer/:aid", userAuth.basicAuth, (req, res) => {
         sdc.increment('DELETE Answer Triggered');
         let timer = new Date();
+
+        let topicARN;
+        let topic = {};
+        var sns = new AWS.SNS();
+        //var listTopicsPromise = sns.listTopics({}).promise();
+        let header = req.headers['authorization'] || '',
+            token = header.split(/\s+/).pop() || '',
+            authFromToken = new Buffer.from(token, 'base64').toString(),
+            user_data = authFromToken.split(/:/),
+            email_address = user_data[0];
+
         if (res.locals.user) {
             Answer.findByPk(req.params.aid)
                 .then(answer => {
@@ -255,8 +315,47 @@ module.exports = app => {
                                     }
                                 });
                                 answer.destroy({ where: { answer_id: file.answer_id } })
-                                    .then(data => {
-                                        logger.info('Answer Deleted successfully. Deleted Answer: ' + data);
+                                    .then(data1 => {
+                                        logger.info('Answer Deleted successfully. Deleted Answer: ' + data1);
+                                        
+                                        sns.listTopics(topic, (err, data) => {
+                                            if (err) {
+                                                logger.error('err in sns listTopics', err);
+                                                console.log("err: ", err);
+                                            }
+                                            else {
+                                                logger.info("email: ", email_address);
+
+                                                topicARN = data.Topics[0].TopicArn;
+                                                let messageJson = {
+                                                    "answer": JSON.stringify(answer),
+                                                    "email": (email_address),
+                                                    "question_id": answer.question_id,
+                                                    "answer_id": answer.answer_id,
+                                                    "message": "Posted new Answer to question '" + answer.question_id + "'"
+                                                }
+                                               
+                                                let params = {
+                                                    TopicArn: topicARN,
+                                                    MessageStructure: 'json',
+                                                    Message: JSON.stringify({ "default": JSON.stringify(messageJson) })
+
+                                                };
+                                                logger.info('params --- ' + params);
+                                                sns.publish(params, (err, data) => {
+                                                    if (err) {
+                                                        logger.error('error in SNS publish', err);
+                                                       
+                                                    } else {
+                                                        logger.info('SNS publish success', data);
+                                                        console.log('SNS publish success', data);
+                                                      
+                                                    }
+                                                })
+                                                console.log(data.Topics);
+                                            }
+                                        })
+
                                         res.status(204).send();
                                     }).catch(err => {
                                         logger.error(err);
