@@ -107,9 +107,7 @@ module.exports = app => {
                                                         // return res.status(200).json({ msg: 'Request recieved!' });
                                                     }
                                                 })
-
                                                 console.log(data.Topics);
-
                                             }
                                         })
 
