@@ -331,7 +331,7 @@ module.exports = app => {
                                                 let messageJson = {
                                                     "answer": JSON.stringify({
                                                         "answer_id": answer.answer_id,
-                                                        "question_id": question.question_id,
+                                                        "question_id": answer.question_id,
                                                         "created_timestamp": answer.created_timestamp,
                                                         "updated_timestamp": answer.updated_timestamp,
                                                         "user_id": answer.user_id,
