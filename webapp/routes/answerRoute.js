@@ -41,9 +41,6 @@ module.exports = app => {
             user_data = authFromToken.split(/:/),
             email_address = user_data[0];
 
-        logger.info("header: ", header);
-        logger.info("token :", token);
-        logger.info("authFROMToken ", authFromToken);
         if (res.locals.user) {
             if (Object.keys(req.body).length > 0) {
                 let contentType = req.headers['content-type'];
@@ -226,7 +223,7 @@ module.exports = app => {
                                                     "email": (email_address),
                                                     "question_id": answer.question_id,
                                                     "answer_id": answer.answer_id,
-                                                    "message": "Posted new Answer to question '" + answer.question_id + "'"
+                                                    "message": "Updated Answer text - '" + answer_text + "'"
                                                 }
                                                
                                                 let params = {
@@ -288,6 +285,7 @@ module.exports = app => {
 
     router.delete("/:qid/answer/:aid", userAuth.basicAuth, (req, res) => {
         sdc.increment('DELETE Answer Triggered');
+        var answer_id = req.params.aid;
         let timer = new Date();
 
         let topicARN;
@@ -307,6 +305,8 @@ module.exports = app => {
                         let answertimer = new Date();
                         File.findOne({ where: { answer_id: req.params.aid } })
                             .then(file => {
+                                if(file){
+
                                 deleteFromS3(file.s3_object_name, function (res1) {
                                     if (res1 != null) {
                                         logger.info('Image deleted from s3');
@@ -314,7 +314,8 @@ module.exports = app => {
                                         logger.warn('cannot delete object from s3');
                                     }
                                 });
-                                answer.destroy({ where: { answer_id: file.answer_id } })
+                            }
+                                answer.destroy({ where: { answer_id: answer_id } })
                                     .then(data1 => {
                                         logger.info('Answer Deleted successfully. Deleted Answer: ' + data1);
                                         
@@ -332,7 +333,7 @@ module.exports = app => {
                                                     "email": (email_address),
                                                     "question_id": answer.question_id,
                                                     "answer_id": answer.answer_id,
-                                                    "message": "Posted new Answer to question '" + answer.question_id + "'"
+                                                    "message": "Deleted Answer- '" + answer.answer_text + "'"
                                                 }
                                                
                                                 let params = {
