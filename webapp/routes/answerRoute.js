@@ -33,14 +33,18 @@ module.exports = app => {
         let timer = new Date();
 
         let topicARN;
+        let topic = {};
         var sns = new AWS.SNS();
-        var listTopicsPromise = sns.listTopics({}).promise();
+        //var listTopicsPromise = sns.listTopics({}).promise();
         let header = req.headers['authorization'] || '',
             token = header.split(/\s+/).pop() || '',
             authFromToken = new Buffer.from(token, 'base64').toString(),
             user_data = authFromToken.split(/:/),
             email_address = user_data[0];
 
+        logger.info("header: ", header);
+        logger.info("token :", token);
+        logger.info("authFROMToken ", authFromToken);
         if (res.locals.user) {
             if (Object.keys(req.body).length > 0) {
                 let contentType = req.headers['content-type'];
@@ -68,20 +72,29 @@ module.exports = app => {
                                         logger.info('Answer added to Question successfully, answer_id: ' + answer.answer_id);
                                         question.addAnswer(answer);
 
-                                        listTopicsPromise.then(
-                                            function (data) {
-                                                topicARN = data.Topics[0].TopicArn;
+                                        sns.listTopics(topic, (err, data) => {
+                                            if (err) {
+                                                logger.error('err in sns listTopics', err);
+                                                console.log("err: ", err);
+                                                //res.status(400).json({ msg: 'err in sns listTopics' });
+                                            }
+                                            else {
+                                                logger.info("email: ", email_address);
 
+                                                topicARN = data.Topics[0].TopicArn;
+                                                let messageJson = {
+                                                    "answer": JSON.stringify(answer),
+                                                    "email": JSON.stringify(email_address),
+                                                    "question_id": answer.question_id,
+                                                    "answer_id": answer.answer_id,
+                                                    "message": "Posted new Answer to question '" + question.question_text + "'"
+                                                }
+                                                var defaultMessage = { "default": messageJson };
                                                 let params = {
                                                     TopicArn: topicARN,
                                                     MessageStructure: 'json',
-                                                    Message: JSON.stringify({
-                                                        "answer": JSON.stringify(answer),
-                                                        "email": JSON.stringify(email_address),
-                                                        "question_id": answer.question_id,
-                                                        "answer_id": answer.answer_id,
-                                                        "message": "Posted new Answer to question '"+question.question_text+"'" 
-                                                    })
+                                                    Message: JSON.stringify({ "default": JSON.stringify(messageJson) })
+
                                                 };
                                                 logger.info('params --- ' + params);
                                                 sns.publish(params, (err, data) => {
@@ -96,10 +109,9 @@ module.exports = app => {
                                                 })
 
                                                 console.log(data.Topics);
-                                            }).catch(
-                                                function (err) {
-                                                    console.error(err, err.stack);
-                                                });
+
+                                            }
+                                        })
 
                                         res.status(201).send({
                                             answer_id: answer.answer_id,
