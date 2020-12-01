@@ -72,7 +72,7 @@ module.exports = app => {
                                             if (err) {
                                                 logger.error('err in sns listTopics', err);
                                                 console.log("err: ", err);
-                                               
+
                                             }
                                             else {
                                                 logger.info("email: ", email_address);
@@ -96,11 +96,11 @@ module.exports = app => {
                                                 sns.publish(params, (err, data) => {
                                                     if (err) {
                                                         logger.error('error in SNS publish', err);
-                                                       
+
                                                     } else {
                                                         logger.info('SNS publish success', data)
                                                         console.log('SNS publish success', data);
-                                                        
+
                                                     }
                                                 })
                                                 console.log(data.Topics);
@@ -207,12 +207,12 @@ module.exports = app => {
                                         answer_text: answer_text
                                     }).then(data1 => {
                                         logger.info('Answer updated successfully: ' + answer.answer_id);
-                                        
+
                                         sns.listTopics(topic, (err, data) => {
                                             if (err) {
                                                 logger.error('err in sns listTopics', err);
                                                 console.log("err: ", err);
-                                                
+
                                             }
                                             else {
                                                 logger.info("email: ", email_address);
@@ -225,7 +225,7 @@ module.exports = app => {
                                                     "answer_id": answer.answer_id,
                                                     "message": "Updated Answer text - '" + answer_text + "'"
                                                 }
-                                               
+
                                                 let params = {
                                                     TopicArn: topicARN,
                                                     MessageStructure: 'json',
@@ -236,11 +236,11 @@ module.exports = app => {
                                                 sns.publish(params, (err, data) => {
                                                     if (err) {
                                                         logger.error('error in SNS publish', err);
-                                                        
+
                                                     } else {
                                                         logger.info('SNS publish success', data)
                                                         console.log('SNS publish success', data);
-                                                        
+
                                                     }
                                                 })
                                                 console.log(data.Topics);
@@ -305,20 +305,20 @@ module.exports = app => {
                         let answertimer = new Date();
                         File.findOne({ where: { answer_id: req.params.aid } })
                             .then(file => {
-                                if(file){
+                                if (file) {
 
-                                deleteFromS3(file.s3_object_name, function (res1) {
-                                    if (res1 != null) {
-                                        logger.info('Image deleted from s3');
-                                    } else {
-                                        logger.warn('cannot delete object from s3');
-                                    }
-                                });
-                            }
+                                    deleteFromS3(file.s3_object_name, function (res1) {
+                                        if (res1 != null) {
+                                            logger.info('Image deleted from s3');
+                                        } else {
+                                            logger.warn('cannot delete object from s3');
+                                        }
+                                    });
+                                }
                                 answer.destroy({ where: { answer_id: answer_id } })
                                     .then(data1 => {
                                         logger.info('Answer Deleted successfully. Deleted Answer: ' + data1);
-                                        
+
                                         sns.listTopics(topic, (err, data) => {
                                             if (err) {
                                                 logger.error('err in sns listTopics', err);
@@ -329,13 +329,21 @@ module.exports = app => {
 
                                                 topicARN = data.Topics[0].TopicArn;
                                                 let messageJson = {
-                                                    "answer": JSON.stringify(answer),
+                                                    "answer": JSON.stringify({
+                                                        "answer_id": answer.answer_id,
+                                                        "question_id": question.question_id,
+                                                        "created_timestamp": answer.created_timestamp,
+                                                        "updated_timestamp": answer.updated_timestamp,
+                                                        "user_id": answer.user_id,
+                                                        "answer_text": "Deleted answer - "+ answer.answer_text
+
+                                                    }),
                                                     "email": (email_address),
                                                     "question_id": answer.question_id,
                                                     "answer_id": answer.answer_id,
                                                     "message": "Deleted Answer- '" + answer.answer_text + "'"
                                                 }
-                                               
+
                                                 let params = {
                                                     TopicArn: topicARN,
                                                     MessageStructure: 'json',
@@ -346,11 +354,11 @@ module.exports = app => {
                                                 sns.publish(params, (err, data) => {
                                                     if (err) {
                                                         logger.error('error in SNS publish', err);
-                                                       
+
                                                     } else {
                                                         logger.info('SNS publish success', data);
                                                         console.log('SNS publish success', data);
-                                                      
+
                                                     }
                                                 })
                                                 console.log(data.Topics);
