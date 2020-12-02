@@ -17,8 +17,7 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.UUID
     },
     question_text: {
-      type: Sequelize.STRING,
-      unique: true
+      type: Sequelize.STRING
     }
   }, {
     underscored: true,
