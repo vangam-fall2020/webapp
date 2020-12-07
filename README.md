@@ -48,7 +48,6 @@ npm run start
     * POST request: localhost:8080/v1/question/{question_id}/answer/{answer_id}/file/{file_id}
     * DELETE request: localhost:8080/v1/question/{question_id}/answer/{answer_id}/file
 
-
 ### Running Tests
 
 Run below command to executes test cases
