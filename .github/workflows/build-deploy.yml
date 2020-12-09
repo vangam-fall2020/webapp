@@ -8,7 +8,7 @@ env:
   AWS_REGION: us-east-1
 
 on:
-  push:
+  workflow_dispatch:
     branches: [ master ]
 
 jobs:
