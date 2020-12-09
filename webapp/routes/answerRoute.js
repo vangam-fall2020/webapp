@@ -31,15 +31,15 @@ module.exports = app => {
     router.post("/:id/answer", userAuth.basicAuth, (req, res) => {
         sdc.increment('POST Answer Triggered');
         let timer = new Date();
-
+        var email_address;
         let topicARN;
         let topic = {};
         var sns = new AWS.SNS();
-        let header = req.headers['authorization'] || '',
-            token = header.split(/\s+/).pop() || '',
-            authFromToken = new Buffer.from(token, 'base64').toString(),
-            user_data = authFromToken.split(/:/),
-            email_address = user_data[0];
+        // let header = req.headers['authorization'] || '',
+        //     token = header.split(/\s+/).pop() || '',
+        //     authFromToken = new Buffer.from(token, 'base64').toString(),
+        //     user_data = authFromToken.split(/:/),
+        //     email_address = user_data[0];
 
         if (res.locals.user) {
             if (Object.keys(req.body).length > 0) {
@@ -56,6 +56,14 @@ module.exports = app => {
                         Question.findByPk(req.params.id)
                             .then(question => {
                                 if (question) {
+                                    User.findOne({where: { id : question.user_id }})
+                                    .then(user=>{
+                                        email_address = user.username;
+                                        logger.info("email_address: ", email_address);
+                                    })
+                                    .catch(err=>{
+                                        logger.info('Error: ', err);
+                                    })
                                     let answertimer = new Date();
                                     Answer.create({
                                         question_question_id: question.question_id,
@@ -183,11 +191,11 @@ module.exports = app => {
         let topicARN;
         let topic = {};
         var sns = new AWS.SNS();
-        let header = req.headers['authorization'] || '',
-            token = header.split(/\s+/).pop() || '',
-            authFromToken = new Buffer.from(token, 'base64').toString(),
-            user_data = authFromToken.split(/:/),
-            email_address = user_data[0];
+        // let header = req.headers['authorization'] || '',
+        //     token = header.split(/\s+/).pop() || '',
+        //     authFromToken = new Buffer.from(token, 'base64').toString(),
+        //     user_data = authFromToken.split(/:/),
+        var email_address;
 
         if (res.locals.user) {
             if (Object.keys(req.body).length > 0) {
@@ -207,7 +215,20 @@ module.exports = app => {
                                         answer_text: answer_text
                                     }).then(data1 => {
                                         logger.info('Answer updated successfully: ' + answer.answer_id);
-
+                                        
+                                        Question.findByPk(answer.question_id)
+                                        .then(que=>{
+                                            User.findByPk(que.user_id)
+                                            .then(user=>{
+                                                email_address = user.username;
+                                                logger.info("email_address: ", email_address);
+                                            })
+                                            .catch(err=>{
+                                                logger.info('Error: ', err);
+                                            })
+                                        }).catch(err=>{
+                                            logger.info('error: ', err);
+                                        })
                                         sns.listTopics(topic, (err, data) => {
                                             if (err) {
                                                 logger.error('err in sns listTopics', err);
@@ -292,11 +313,11 @@ module.exports = app => {
         let topic = {};
         var sns = new AWS.SNS();
         //var listTopicsPromise = sns.listTopics({}).promise();
-        let header = req.headers['authorization'] || '',
-            token = header.split(/\s+/).pop() || '',
-            authFromToken = new Buffer.from(token, 'base64').toString(),
-            user_data = authFromToken.split(/:/),
-            email_address = user_data[0];
+        // let header = req.headers['authorization'] || '',
+        //     token = header.split(/\s+/).pop() || '',
+        //     authFromToken = new Buffer.from(token, 'base64').toString(),
+        //     user_data = authFromToken.split(/:/),
+        var email_address;
 
         if (res.locals.user) {
             Answer.findByPk(req.params.aid)
@@ -315,6 +336,19 @@ module.exports = app => {
                                         }
                                     });
                                 }
+                                Question.findByPk(answer.question_id)
+                                .then(que=>{
+                                    User.findByPk(que.user_id)
+                                            .then(user=>{
+                                                email_address = user.username;
+                                                logger.info("email_address: ", email_address);
+                                            })
+                                            .catch(err=>{
+                                                logger.info('Error: ', err);
+                                            })
+                                }).catch(err=>{
+                                    logger.info('error: ', err);
+                                })
                                 answer.destroy({ where: { answer_id: answer_id } })
                                     .then(data1 => {
                                         logger.info('Answer Deleted successfully. Deleted Answer: ' + data1);
