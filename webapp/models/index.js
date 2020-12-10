@@ -5,6 +5,8 @@ log4js.configure({
   categories: { default: { appenders: ['logs'], level: 'info' } }
 });
 const logger = log4js.getLogger('logs');
+const fs = require('fs');
+const rdsCa = fs.readFileSync(__dirname + '/rds-combined-ca-bundle.pem');
 
 const Sequelize = require("sequelize");
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
@@ -20,7 +22,8 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   },
   dialectOptions: {
     ssl: {
-      rejectUnauthorized: true
+      rejectUnauthorized: true,
+      ca: [rdsCa]
     }
   }
 });
