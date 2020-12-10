@@ -1,9 +1,9 @@
 const dbConfig = require("../config/config.js");
 const log4js = require('log4js');
-	log4js.configure({
-	  appenders: { logs: { type: 'file', filename: '/home/ubuntu/webapp/logs/webapp.log' } },
-	  categories: { default: { appenders: ['logs'], level: 'info' } }
-    });
+log4js.configure({
+  appenders: { logs: { type: 'file', filename: '/home/ubuntu/webapp/logs/webapp.log' } },
+  categories: { default: { appenders: ['logs'], level: 'info' } }
+});
 const logger = log4js.getLogger('logs');
 
 const Sequelize = require("sequelize");
@@ -17,6 +17,11 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
     min: dbConfig.pool.min,
     acquire: dbConfig.pool.acquire,
     idle: dbConfig.pool.idle
+  },
+  dialectOptions: {
+    ssl: {
+      rejectUnauthorized: true
+    }
   }
 });
 
